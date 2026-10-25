@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Studio Control</title>
+<style>
+:root{--bg:#0e1114;--panel:#161a1f;--panel2:#1b2026;--ink:#eceff3;--dim:#98a3af;
+ --faint:#67727d;--line:#262d35;--accent:#2f9e63;--warn:#d98324;--bad:#c0504d;
+ --f:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+ --m:ui-monospace,SFMono-Regular,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);font-size:14px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:18px;padding-block:22px 70px}
+h1{font-size:18px;font-weight:600;margin:0;letter-spacing:-.01em}
+h2{font-size:12px;font-weight:600;margin:0 0 10px;text-transform:uppercase;
+ letter-spacing:.09em;color:var(--faint);font-family:var(--m)}
+.hdr{display:flex;justify-content:space-between;align-items:center;gap:14px;
+ flex-wrap:wrap;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.mono{font-family:var(--m);font-variant-numeric:tabular-nums}
+button,input,select,textarea{font:inherit}
+.btn{background:var(--accent);color:#07140d;border:0;border-radius:8px;padding:9px 15px;
+ font-weight:600;font-size:13px;cursor:pointer}
+.btn.s{background:var(--panel2);color:var(--ink);border:1px solid var(--line);font-weight:500;
+ padding:6px 11px;font-size:12px}
+.btn.s:hover{border-color:var(--faint)}
+.btn.d{background:transparent;color:var(--bad);border:1px solid var(--line)}
+input,select,textarea{background:var(--panel2);color:var(--ink);border:1px solid var(--line);
+ border-radius:8px;padding:9px 10px;font-size:13px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:transparent}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:16px 0 22px}
+.c{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 14px}
+.c b{display:block;font-family:var(--m);font-size:21px;font-weight:600;letter-spacing:-.02em}
+.c span{font-size:10.5px;color:var(--faint);font-family:var(--m);text-transform:uppercase;letter-spacing:.07em}
+section{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
+th{text-align:left;font-family:var(--m);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;
+ color:var(--faint);font-weight:500;padding:6px 10px 6px 0;border-bottom:1px solid var(--line)}
+td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1 1 150px;min-width:0}
+label{display:block;font-family:var(--m);font-size:9.5px;letter-spacing:.08em;
+ text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.tok{font-family:var(--m);font-size:11px;color:var(--dim);word-break:break-all}
+.ok{color:var(--accent)}.wn{color:var(--warn)}.bd{color:var(--bad)}
+.bar{height:5px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:5px;max-width:140px}
+.bar i{display:block;height:100%;background:var(--accent)}
+.gate{max-width:380px;margin:12vh auto;text-align:center}
+.note{font-size:12px;color:var(--dim);margin-top:8px}
+.pill{font-family:var(--m);font-size:10px;padding:2px 7px;border-radius:99px;border:1px solid var(--line);color:var(--dim)}
+.hide{display:none!important}
+</style></head><body>
+<div class="wrap">
+  <div id="gate" class="gate">
+    <h1>Studio Control</h1>
+    <p class="note">Enter your admin token.</p>
+    <input id="tok" type="password" placeholder="admin token" style="margin:12px 0">
+    <button class="btn" id="enter" style="width:100%">Open</button>
+    <p class="note" id="gerr"></p>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="hdr">
+      <h1>Studio Control</h1>
+      <div class="mono" style="font-size:11px;color:var(--faint);text-align:right" id="env"></div>
+    </div>
+
+    <div class="cards" id="stats"></div>
+
+    <section>
+      <h2>Change the studio</h2>
+      <p class="note" style="margin:0 0 10px">Describe what you want and it is added.
+        It can create ready weeks and brands — not code, keys or settings.</p>
+      <div class="row">
+        <div style="flex:4 1 320px"><input id="cmd"
+          placeholder="Add a ready week for product launches, five pieces, aimed at leads"></div>
+        <div style="flex:0 0 auto"><button class="btn s" id="cmdprev">Preview</button></div>
+        <div style="flex:0 0 auto"><button class="btn" id="cmdgo">Apply</button></div>
+      </div>
+      <p class="note" id="cmdout"></p>
+      <pre id="cmdjson" class="hide" style="background:var(--panel2);border:1px solid var(--line);
+        border-radius:8px;padding:12px;font-size:11px;max-height:280px;overflow:auto;
+        white-space:pre-wrap;word-break:break-word"></pre>
+    </section>
+
+    <section>
+      <h2>Clients</h2>
+      <div class="tw"><table id="ctab"><thead><tr>
+        <th>Name</th><th>Access link</th><th>This month</th><th>Cap</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="row" style="margin-top:14px">
+        <div><label>New client</label><input id="cname" placeholder="Acme Ltd"></div>
+        <div style="flex:0 0 120px"><label>Cap USD / month</label><input id="ccap" type="number" value="25" step="5"></div>
+        <div style="flex:0 0 auto"><button class="btn" id="addc">Create seat</button></div>
+      </div>
+      <p class="note" id="newtok"></p>
+    </section>
+
+    <section>
+      <h2>Weekly automation</h2>
+      <div class="tw"><table id="stab"><thead><tr>
+        <th>Name</th><th>Client</th><th>Day</th><th>Source</th><th>Last run</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+      <div class="row" style="margin-top:14px">
+        <div><label>Name</label><input id="sname" placeholder="Weekly — iCore"></div>
+        <div><label>Client</label><select id="sclient"></select></div>
+        <div style="flex:0 0 120px"><label>Produce on</label><select id="sday">
+          <option value="0">Monday</option><option value="1">Tuesday</option>
+          <option value="2">Wednesday</option><option value="3">Thursday</option>
+          <option value="4">Friday</option><option value="5">Saturday</option>
+          <option value="6">Sunday</option></select></div>
+        <div><label>Source</label><select id="stpl"></select></div>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <div><label>Brand</label><select id="sbrand"></select></div>
+        <div style="flex:3 1 260px"><label>Subject</label><input id="ssubj" placeholder="risk allocation in PPP"></div>
+        <div style="flex:0 0 auto"><button class="btn" id="adds">Add schedule</button></div>
+      </div>
+      <p class="note">Runs when cron calls <span class="mono">--run-schedules</span>. A template source costs nothing per week.</p>
+    </section>
+
+    <section>
+      <h2>Spend by activity</h2>
+      <div class="tw"><table id="ktab"><thead><tr>
+        <th>Activity</th><th>Count</th><th>Cost</th><th>Per event</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Recent jobs</h2>
+      <div class="tw"><table id="jtab"><thead><tr>
+        <th>When</th><th>Client</th><th>Status</th><th>Progress</th><th></th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section>
+      <h2>Activity log</h2>
+      <div class="tw"><table id="ltab"><thead><tr>
+        <th>When</th><th>Client</th><th>Event</th><th>Cost</th><th>Detail</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+  </div>
+</div>
+<script>
+const $=i=>document.getElementById(i);
+let A=localStorage.getItem("adm")||"";
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const money=n=>"$"+(+n||0).toFixed(4);
+const when=t=>new Date((t||0)*1000).toLocaleString(undefined,{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"});
+async function api(p,body){
+  const r=await fetch(p,{method:body?"POST":"GET",
+    headers:Object.assign({"X-Craftly-Admin":A},body?{"Content-Type":"application/json"}:{}),
+    body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({error:"bad response"}));
+  if(!r.ok) throw new Error(j.error||"error "+r.status);
+  return j;
+}
+$("enter").onclick=async()=>{
+  A=$("tok").value.trim(); if(!A)return;
+  try{await api("/api/admin/state");localStorage.setItem("adm",A);
+    $("gate").classList.add("hide");$("app").classList.remove("hide");load();}
+  catch(e){$("gerr").innerHTML='<span class="bd">'+esc(e.message)+"</span>"}
+};
+$("tok").addEventListener("keydown",e=>{if(e.key==="Enter")$("enter").click()});
+
+let ST=null;
+async function load(){
+  const d=await api("/api/admin/state"); ST=d;
+  $("env").innerHTML=`planner ${esc(d.planner.provider)} · ${d.planner.ready?esc(d.planner.model):'<span class="bd">no key</span>'}
+    <br>voiceover ${d.tts?'<span class="ok">on</span>':'off'} · cache ${esc(d.cache_dir)}`;
+  const plans=d.by_kind.find(k=>k.kind==="plan")||{n:0,usd:0};
+  const free=d.by_kind.filter(k=>k.kind!=="plan"&&k.kind!=="rewrite"&&k.kind!=="tts")
+    .reduce((a,k)=>a+k.n,0);
+  $("stats").innerHTML=[
+    ["Total spend",money(d.total_usd)],["Clients",d.clients.length],
+    ["Paid AI calls",plans.n+(d.by_kind.find(k=>k.kind==="rewrite")?.n||0)],
+    ["Free actions",free],["Schedules",d.schedules.filter(s=>s.active).length]
+  ].map(([l,v])=>`<div class="c"><b>${v}</b><span>${l}</span></div>`).join("");
+
+  $("ctab").querySelector("tbody").innerHTML=d.clients.map(c=>{
+    const pct=Math.min(100,(c.spend/(c.monthly_cap_usd||1))*100);
+    const cls=pct>90?"bd":pct>60?"wn":"ok";
+    return `<tr><td>${esc(c.name)}${c.active?"":' <span class="pill">off</span>'}</td>
+     <td><span class="tok">?t=${esc(c.token)}</span>
+       <button class="btn s" data-copy="${esc(c.token)}" style="margin-left:6px">copy link</button></td>
+     <td class="mono ${cls}">${money(c.spend)}<div class="bar"><i style="width:${pct}%"></i></div></td>
+     <td class="mono">$${(+c.monthly_cap_usd).toFixed(0)}</td>
+     <td><button class="btn s" data-cap="${esc(c.token)}" data-name="${esc(c.name)}">edit</button></td></tr>`;
+  }).join("")||'<tr><td colspan="5" class="note">No clients yet.</td></tr>';
+
+  const opts=d.clients.map(c=>`<option value="${esc(c.token)}">${esc(c.name)}</option>`).join("");
+  $("sclient").innerHTML=opts;
+  $("sbrand").innerHTML=d.brands.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join("");
+  $("stpl").innerHTML='<option value="">Write fresh each week (uses AI)</option>'+
+    d.templates.map(t=>`<option value="${esc(t.id)}">${esc(t.name)} — free</option>`).join("");
+
+  const days=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+  $("stab").querySelector("tbody").innerHTML=d.schedules.map(s=>`<tr>
+    <td>${esc(s.name)}${s.active?"":' <span class="pill">paused</span>'}</td>
+    <td>${esc(s.client)}</td><td class="mono">${days[s.weekday]||"?"}</td>
+    <td>${s.template?'<span class="ok">'+esc(s.template)+"</span>":'<span class="wn">AI</span>'}</td>
+    <td class="mono">${s.last_run?when(s.last_run):"—"}</td>
+    <td><button class="btn s" data-run="${s.id}">run now</button>
+      <button class="btn s" data-tog="${s.id}">${s.active?"pause":"resume"}</button>
+      <button class="btn s d" data-del="${s.id}">delete</button></td></tr>`).join("")
+    ||'<tr><td colspan="6" class="note">No schedules yet.</td></tr>';
+
+  $("ktab").querySelector("tbody").innerHTML=d.by_kind.map(k=>`<tr>
+    <td>${esc(k.kind)}</td><td class="mono">${k.n}</td>
+    <td class="mono ${k.usd>0?"":"ok"}">${k.usd>0?money(k.usd):"free"}</td>
+    <td class="mono">${k.usd>0?money(k.usd/k.n):"—"}</td></tr>`).join("");
+
+  $("jtab").querySelector("tbody").innerHTML=d.jobs.map(j=>`<tr>
+    <td class="mono">${when(j.created)}</td><td>${esc(j.client)}</td>
+    <td class="${j.status==="done"?"ok":j.status==="failed"?"bd":"wn"}">${esc(j.status)}</td>
+    <td class="mono">${esc(j.progress||"")}</td>
+    <td>${j.status==="done"?`<a class="btn s" href="/files/${esc(j.id)}/WEEK-COPY.md" target="_blank">copy sheet</a>`:""}</td>
+  </tr>`).join("")||'<tr><td colspan="5" class="note">No jobs yet.</td></tr>';
+
+  $("ltab").querySelector("tbody").innerHTML=d.recent.map(r=>`<tr>
+    <td class="mono">${when(r.at)}</td><td>${esc(r.client)}</td><td>${esc(r.kind)}</td>
+    <td class="mono ${r.usd>0?"":"ok"}">${r.usd>0?money(r.usd):"free"}</td>
+    <td class="note" style="margin:0">${esc((r.note||"").slice(0,60))}</td></tr>`).join("");
+}
+document.addEventListener("click",async e=>{
+  const b=e.target.closest("button"); if(!b)return;
+  const d=b.dataset;
+  if(d.copy){const u=location.origin+"/?t="+d.copy;
+    try{await navigator.clipboard.writeText(u);b.textContent="copied"}
+    catch{prompt("Copy this link",u)}
+    setTimeout(()=>b.textContent="copy link",1800);return}
+  if(d.cap){const cap=prompt("Monthly cap in USD for "+d.name,"25");if(cap===null)return;
+    await api("/api/admin/client-update",{token:d.cap,name:d.name,cap:+cap,active:true});load();return}
+  if(d.run){b.textContent="…";try{const r=await api("/api/admin/schedule-run",{id:+d.run});
+    b.textContent="done"}catch(err){b.textContent="failed"}setTimeout(load,800);return}
+  if(d.tog){await api("/api/admin/schedule-toggle",{id:+d.tog});load();return}
+  if(d.del){if(!confirm("Delete this schedule?"))return;
+    await api("/api/admin/schedule-delete",{id:+d.del});load();return}
+});
+async function runCmd(preview){
+  const t=$("cmd").value.trim(); if(!t)return;
+  const btn=preview?$("cmdprev"):$("cmdgo"); btn.disabled=true;
+  $("cmdout").textContent="Working…"; $("cmdjson").classList.add("hide");
+  try{
+    const r=await api("/api/admin/command",{instruction:t,preview:!!preview});
+    if(preview){
+      $("cmdout").innerHTML='Preview only — nothing saved. Cost '+money(r.cost_usd);
+      $("cmdjson").textContent=JSON.stringify(r.preview,null,2);
+      $("cmdjson").classList.remove("hide");
+    }else{
+      $("cmdout").innerHTML='<span class="ok">'+esc(r.message)+"</span> · "+money(r.cost_usd);
+      $("cmd").value=""; load();
+    }
+  }catch(e){
+    $("cmdout").innerHTML='<span class="bd">'+esc(e.message)+"</span>";
+  }
+  btn.disabled=false;
+}
+$("cmdprev").onclick=()=>runCmd(true);
+$("cmdgo").onclick=()=>runCmd(false);
+$("cmd").addEventListener("keydown",e=>{if(e.key==="Enter")runCmd(false)});
+$("addc").onclick=async()=>{
+  const name=$("cname").value.trim(); if(!name)return;
+  const r=await api("/api/admin/client-new",{name,cap:+$("ccap").value||25});
+  $("newtok").innerHTML='Seat created. Link: <span class="tok">'+
+    location.origin+"/?t="+esc(r.token)+"</span>";
+  $("cname").value="";load();
+};
+$("adds").onclick=async()=>{
+  if(!$("sclient").value){alert("Create a client first.");return}
+  await api("/api/admin/schedule-new",{token:$("sclient").value,
+    name:$("sname").value.trim()||"Weekly",weekday:+$("sday").value,
+    template:$("stpl").value,
+    brief:{brand:$("sbrand").value,subject:$("ssubj").value.trim(),
+      goal:"visibility",formats:["explainer","carousel","text_post","quote_card"],
+      platforms:["linkedin"],count:7}});
+  $("sname").value="";$("ssubj").value="";load();
+};
+if(A){$("tok").value=A;$("enter").click()}
+</script><script src="offline.js"></script><script src="nav.js"></script></body></html>

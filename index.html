@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>iCore Creative OS</title>
+<style>
+  :root{--bg:#070a0f;--card:#0d1219;--line:#1c2430;--ink:#eef2f7;--dim:#8794a6;
+        --acc:#3ddc97;--warn:#e0a94b;--no:#6b7686}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.65 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:70px 18px 90px}
+  h1{font-size:clamp(32px,4vw,50px);margin:0 0 12px;letter-spacing:-.022em}
+  p.l{color:var(--dim);max-width:62ch;margin:0 0 10px}
+  h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);
+     margin:46px 0 14px;font-weight:700}
+  .g{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+  a.c{display:block;background:var(--card);border:1px solid var(--line);
+      border-radius:14px;padding:18px 20px;text-decoration:none;color:inherit}
+  a.c:hover{border-color:var(--acc)}
+  a.c b{display:block;font-size:18px;margin-bottom:5px}
+  a.c span{color:var(--dim);font-size:14.5px}
+  .t{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;
+     padding:3px 8px;border-radius:999px;border:1px solid;float:right;margin-left:10px}
+  .offline{color:var(--acc);border-color:#1d4d3a;background:#0c2119}
+  .partly{color:var(--warn);border-color:#4d3c1d;background:#1f180c}
+  .needs{color:#78a8e0;border-color:#1d3450;background:#0c161f}
+  pre{background:var(--card);border:1px solid var(--line);border-radius:12px;
+      padding:16px 18px;overflow:auto;font-size:13.5px;color:#cfd8e4}
+  .note{border-left:2px solid var(--acc);padding:3px 0 3px 15px;color:var(--dim);
+        max-width:70ch;margin:20px 0}
+</style></head><body><div class="wrap">
+<h1>iCore Creative OS</h1>
+<p class="l">These are the application's own pages. Open any of them — this is
+the software, not a picture of it.</p>
+<p class="l">The ones marked <b style="color:#3ddc97">RUNS HERE</b> compute in the
+browser and work from a file. The rest are rendered by the studio, and they say
+so rather than failing quietly.</p>
+
+<h2>Runs in the browser</h2><div class="g"><a class="c" href="studio3d.html"><span class="t offline">RUNS HERE</span><b>3D Studio</b><span>Real geometry, recorded to video in this browser.</span></a><a class="c" href="home.html"><span class="t offline">RUNS HERE</span><b>Home</b><span>The front door.</span></a><a class="c" href="video.html"><span class="t offline">RUNS HERE</span><b>Video Studio</b><span>Five kinds of video, drawn and recorded in this browser.</span></a><a class="c" href="webstudio.html"><span class="t offline">RUNS HERE</span><b>Web Studio</b><span>Five questions, then six complete website designs.</span></a></div><h2>Partly</h2><div class="g"><a class="c" href="brand.html"><span class="t partly">PARTLY</span><b>Brand Studio</b><span>The marks and palette compute here; saving a kit needs the studio.</span></a></div><h2>Rendered by the studio</h2><div class="g"><a class="c" href="content.html"><span class="t needs">NEEDS THE STUDIO</span><b>Content Studio</b><span>Rendered on the studio.</span></a><a class="c" href="admin.html"><span class="t needs">NEEDS THE STUDIO</span><b>Control</b><span>Reads the studio's own records.</span></a><a class="c" href="create.html"><span class="t needs">NEEDS THE STUDIO</span><b>Create</b><span>Planning and building run on the studio.</span></a><a class="c" href="document.html"><span class="t needs">NEEDS THE STUDIO</span><b>Document Desk</b><span>Word, PowerPoint and PDF are built on the studio.</span></a><a class="c" href="reels.html"><span class="t needs">NEEDS THE STUDIO</span><b>Short form</b><span>Rendered on the studio.</span></a><a class="c" href="workspace.html"><span class="t needs">NEEDS THE STUDIO</span><b>Workspace</b><span>Accounts live on the studio.</span></a></div>
+
+<h2>To turn the rest on</h2>
+<pre>cd craftly
+python -m pip install -r requirements.txt
+python craftly_server.py --port 8137</pre>
+<p class="note">Then open <b>http://127.0.0.1:8137</b> — the same pages, with the
+Word files, decks, PDFs, server-rendered video, photograph tracing, the search
+over 10,744 assets and the music all working.</p>
+</div></body></html>

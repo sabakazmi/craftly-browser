@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Craftly</title>
+<style>
+/* The shell. Five modules, one door. Everything a client can reach is
+   on this page, and the token they arrived with is carried into every
+   link so they never have to hold a URL. */
+:root{
+  --bg:#07090d;--panel:#0d1117;--panel2:#11171f;--line:#1c232e;--ink:#eef2f7;
+  --dim:#8b97a8;--faint:#5a6578;--accent:#4f8cff;--accent2:#8e55ff;--ok:#46d6a0;
+  --warn:#f0a35e;--ease:cubic-bezier(.2,.7,.2,1);
+  --f:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f);
+  -webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(900px 620px at 84% -10%,color-mix(in srgb,var(--accent2) 16%,transparent),transparent 70%),
+             radial-gradient(760px 520px at 4% 10%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 72%)}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding:0 20px 80px}
+
+.stage{position:relative;margin:0 -20px;padding:0 20px;overflow:hidden;min-height:272px;
+  border-bottom:1px solid var(--line)}
+#scene{position:absolute;top:0;right:-5%;width:60%;height:100%;opacity:.9;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 44%);
+  mask-image:linear-gradient(90deg,transparent,#000 44%)}
+.inner{position:relative;z-index:1;padding:66px 0 32px;min-height:272px;
+  display:flex;flex-direction:column;justify-content:center}
+.eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.26em;text-transform:uppercase;
+  color:var(--accent);opacity:0;animation:fade .6s .05s forwards}
+h1{margin:10px 0 0;font-size:clamp(30px,5.4vw,56px);font-weight:600;letter-spacing:-.038em;
+  line-height:1.02;opacity:0;animation:rise .75s .1s var(--ease) forwards}
+h1 em{font-style:normal;background:linear-gradient(100deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{color:var(--dim);margin-top:13px;max-width:56ch;font-size:15px;
+  opacity:0;animation:rise .75s .2s var(--ease) forwards}
+.who{position:absolute;top:22px;right:20px;z-index:2;font-family:var(--m);font-size:10.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right;
+  padding:8px 13px;border-radius:10px;border:1px solid color-mix(in srgb,var(--line) 70%,transparent);
+  background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(10px);line-height:1.7}
+
+.mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(286px,1fr));gap:16px;margin-top:34px}
+a.mod{position:relative;display:block;text-decoration:none;color:inherit;overflow:hidden;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:18px;padding:22px;opacity:0;transform:translateY(16px);
+  animation:rise .6s var(--ease) forwards;
+  transition:transform .32s var(--ease),border-color .26s var(--ease),box-shadow .36s var(--ease)}
+a.mod::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+  background:radial-gradient(460px 180px at var(--mx,50%) var(--my,0%),
+    color-mix(in srgb,var(--accent) 16%,transparent),transparent 62%);
+  transition:opacity .3s var(--ease)}
+a.mod:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--accent) 55%,var(--line));
+  box-shadow:0 24px 54px -30px color-mix(in srgb,var(--accent) 85%,transparent)}
+a.mod:hover::after{opacity:1}
+a.mod:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.mod .ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:15px;
+  background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 28%,transparent)}
+.mod .ic svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:1.5;
+  stroke-linecap:round;stroke-linejoin:round}
+.mod h2{margin:0;font-size:17px;font-weight:600;letter-spacing:-.016em}
+.mod p{margin:7px 0 0;font-size:13px;color:var(--dim);line-height:1.5}
+.mod .tag{display:inline-block;margin-top:14px;font-family:var(--m);font-size:9.5px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+.mod .go{position:absolute;right:20px;top:24px;font-family:var(--m);font-size:16px;color:var(--faint);
+  transition:transform .3s var(--ease),color .25s}
+a.mod:hover .go{transform:translateX(4px);color:var(--accent)}
+a.mod.off{opacity:.55;pointer-events:none}
+
+.strip{display:flex;gap:28px;flex-wrap:wrap;margin-top:34px;padding-top:22px;
+  border-top:1px solid var(--line)}
+.st b{display:block;font-family:var(--m);font-size:25px;font-weight:500;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.st span{font-family:var(--m);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+footer{margin-top:44px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--m);font-size:10.5px;color:var(--faint);line-height:1.9;letter-spacing:.04em}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes fade{to{opacity:1}}
+@media(max-width:700px){#scene{width:92%;opacity:.5}.stage,.inner{min-height:210px}
+  .inner{padding:52px 0 24px}.who{position:static;display:inline-block;margin-top:14px;text-align:left}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}
+  a.mod{opacity:1;transform:none}#scene{display:none}}
+</style></head><body>
+<div class="wrap">
+  <div class="stage">
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="who" id="who">checking</div>
+    <div class="inner">
+      <div class="eyebrow">iCore</div>
+      <h1>Craftly <em>Studio</em></h1>
+      <p class="sub">Five tools, one door. A website, a week of content, a motion post —
+        and everything you have made, kept in one place.</p>
+    </div>
+  </div>
+
+  <div class="mods" id="mods"></div>
+  <div class="strip" id="strip"></div>
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const TOKEN = new URLSearchParams(location.search).get("t") || "";
+const q = u => u + (TOKEN ? (u.includes("?") ? "&" : "?") + "t=" + encodeURIComponent(TOKEN) : "");
+
+const I = {
+  web:   '<path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z"/><circle cx="12" cy="12" r="9"/>',
+  posts: '<rect x="3" y="4" width="18" height="13" rx="2"/><path d="M7 20h10M8 9h8M8 13h5"/>',
+  cube:  '<path d="M12 2.6 20.5 7v10L12 21.4 3.5 17V7Z"/><path d="M12 2.6V12m0 0 8.5-5M12 12l-8.5-5"/>',
+  page:  '<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/>',
+  spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  drop:  '<path d="M12 3.5 6.8 10a7 7 0 1 0 10.4 0Z"/><path d="M9 15a3 3 0 0 0 3 3"/>',
+  deck:  '<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>',
+  grid:  '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>',
+  dial:  '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  team:  '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0"/><circle cx="17" cy="9.5" r="2.4"/><path d="M15.4 14.6A4.6 4.6 0 0 1 20.5 19"/>',
+  play:  '<rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><path d="M10 9.2 15 12l-5 2.8Z"/>'
+};
+
+const MODULES = [
+  { id:"create",    icon:"spark", title:"Create",
+    desc:"Say what you want or paste your source. The studio reads it, shows you the plan it will follow, builds it, then checks the rendered pages before handing it over.",
+    tag:"One place to start", href:"/create" },
+  { id:"brand",     icon:"drop",  title:"Brand Studio",
+    desc:"A palette in a perceptual colour space, a type pairing with a reason, and ten families of mark drawn from geometry. Every pairing contrast-checked.",
+    tag:"Palette · type · logos", href:"/brand" },
+  { id:"webstudio", icon:"web",   title:"Web Studio",
+    desc:"Five questions, then six complete websites — different layouts, not six recolours. Pick one and edit it by clicking.",
+    tag:"Five steps · six designs", href:"/webstudio" },
+  { id:"studio",    icon:"posts", title:"Content Studio",
+    desc:"A week of posts from one brief: carousels, cards, copy and video, in your own brand.",
+    tag:"A week at a time", href:"/studio" },
+  { id:"video",     icon:"play",  title:"Video Studio",
+    desc:"Quiz, question-and-answer, presentation, animated and whiteboard videos, plus animated charts, spatial walk-throughs and your deck as film.",
+    tag:"Five kinds · 44 drawn assets", href:"/video" },
+  { id:"studio3d",  icon:"cube",  title:"3D Studio",
+    desc:"A motion post built from real geometry, recorded to video in this browser. No render server, no waiting in a queue.",
+    tag:"Records in the browser", href:"/studio3d" },
+  { id:"document",  icon:"page",  title:"Document Desk",
+    desc:"Paste plain text and get back a set Word file, a deck and a PDF — your cover, your colours, your type. Nothing is written for you.",
+    tag:"Word · deck · PDF", href:"/document" },
+  { id:"gallery",   icon:"grid",  title:"Gallery",
+    desc:"Everything this studio has ever made, with the files as they will be posted.",
+    tag:"Everything made", href:"/gallery" },
+  { id:"workspace", icon:"team",  title:"Workspace",
+    desc:"Your team and their roles, the accounts you have connected, what runs on a schedule, and the plan.",
+    tag:"Team · connections · schedule", href:"/workspace" },
+  { id:"admin",     icon:"dial",  title:"Control panel",
+    desc:"Clients, their links, their monthly allowance, and what has been spent.",
+    tag:"Owner only", href:"/admin", owner:true }
+];
+
+function paint(cfg, owner){
+  $("mods").innerHTML = MODULES.filter(m => !m.owner || owner).map((m,i) =>
+    `<a class="mod" href="${m.owner ? m.href : q(m.href)}" style="animation-delay:${.26+i*.06}s">
+       <span class="go">&rarr;</span>
+       <span class="ic"><svg viewBox="0 0 24 24">${I[m.icon]}</svg></span>
+       <h2>${m.title}</h2><p>${m.desc}</p><span class="tag">${m.tag}</span>
+     </a>`).join("");
+}
+
+async function boot(){
+  let cfg = null;
+  try { cfg = await (await fetch(q("/api/config"))).json(); } catch(e){}
+  const owner = !TOKEN;                       // the control panel asks for its own password
+  paint(cfg, owner);
+
+  if (cfg && cfg.ok){
+    $("who").innerHTML = (cfg.client || "client") +
+      (cfg.ai_account === "client" ? "<br>your own AI account"
+        : "<br>$" + (cfg.spend||0).toFixed(2) + " of $" + (cfg.cap||0).toFixed(2) + " this month");
+  } else {
+    $("who").innerHTML = TOKEN ? '<span style="color:var(--warn)">link not recognised</span>'
+                               : "owner view";
+  }
+
+  let stats = null;
+  try { stats = await (await fetch("/api/gallery-stats")).json(); } catch(e){}
+  const rows = stats && stats.weeks != null
+    ? [["Weeks", stats.weeks], ["Pieces", stats.files], ["Videos", stats.videos], ["Images", stats.images]]
+    : [];
+  $("strip").innerHTML = rows.map(([l,v],i) =>
+    `<div class="st" style="animation:rise .6s ${.4+i*.06}s var(--ease) both"><b>${v}</b><span>${l}</span></div>`).join("");
+  $("foot").textContent = "Craftly · everything here runs on this machine; nothing is sent anywhere you did not configure.";
+}
+
+/* the same scene as the studio pages, so the app feels like one thing */
+(function scene(){
+  const cv = $("scene"); if (!cv) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){ cv.style.display="none"; return; }
+  const g = cv.getContext("2d"); if (!g){ cv.style.display="none"; return; }
+  const t=(1+Math.sqrt(5))/2, V=[];
+  for (const [a,b] of [[1,t],[-1,t],[1,-t],[-1,-t]]) V.push([0,a,b],[b,0,a],[a,b,0]);
+  const verts=V.map(v=>{const l=Math.hypot(...v);return v.map(x=>x/l)});
+  const E=[]; for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++)
+    E.push([i,j,Math.hypot(verts[i][0]-verts[j][0],verts[i][1]-verts[j][1],verts[i][2]-verts[j][2])]);
+  E.sort((a,b)=>a[2]-b[2]); const edges=E.slice(0,30).map(e=>[e[0],e[1]]);
+  const pts=[]; const N=130;
+  for(let i=0;i<N;i++){const y=1-(i/(N-1))*2,r=Math.sqrt(Math.max(0,1-y*y)),th=i*Math.PI*(3-Math.sqrt(5));
+    pts.push([Math.cos(th)*r,y,Math.sin(th)*r]);}
+  let W=0,H=0;
+  const size=()=>{const r=cv.getBoundingClientRect();const d=Math.min(2,devicePixelRatio||1);
+    W=Math.max(1,Math.round(r.width));H=Math.max(1,Math.round(r.height));
+    cv.width=W*d;cv.height=H*d;g.setTransform(d,0,0,d,0,0);};
+  new ResizeObserver(size).observe(cv); size();
+  let mx=0,my=0,tx=0,ty=0;
+  addEventListener("pointermove",e=>{tx=(e.clientX/innerWidth-.5)*.5;ty=(e.clientY/innerHeight-.5)*.35;},{passive:true});
+  const rot=(p,ax,ay)=>{let[x,y,z]=p;let c=Math.cos(ay),s=Math.sin(ay);[x,z]=[x*c-z*s,x*s+z*c];
+    c=Math.cos(ax);s=Math.sin(ax);[y,z]=[y*c-z*s,y*s+z*c];return[x,y,z];};
+  const cs=getComputedStyle(document.documentElement);
+  const A=cs.getPropertyValue("--accent").trim()||"#4f8cff", B=cs.getPropertyValue("--accent2").trim()||"#8e55ff";
+  let run=true; document.addEventListener("visibilitychange",()=>run=!document.hidden);
+  (function frame(ts){ requestAnimationFrame(frame); if(!run) return;
+    mx+=(tx-mx)*.055; my+=(ty-my)*.055;
+    const ay=ts*.00016+mx*2.2, ax=-.42+my*1.6, S=Math.min(W,H)*.44;
+    const pr=p=>{const d=3.4,k=d/(d-p[2]);return[W*.74+p[0]*S*k,H*.5+p[1]*S*k,k];};
+    g.clearRect(0,0,W,H);
+    for(const p of pts){const r=rot([p[0]*1.5,p[1]*1.5,p[2]*1.5],ax,ay*.72);const[x,y,k]=pr(r);
+      if(x<-40||x>W+40) continue; const a=Math.max(0,Math.min(1,(k-.62)/.9))*.4; if(a<=.01) continue;
+      g.globalAlpha=a; g.fillStyle=r[2]>0?B:A; g.beginPath(); g.arc(x,y,Math.max(.5,1.5*k),0,6.283); g.fill();}
+    const R=verts.map(v=>rot(v,ax,ay));
+    edges.map(([i,j])=>({i,j,z:(R[i][2]+R[j][2])/2})).sort((a,b)=>a.z-b.z).forEach(e=>{
+      const P=pr(R[e.i]),Q=pr(R[e.j]),d=Math.max(0,Math.min(1,(e.z+1)/2));
+      g.globalAlpha=.10+d*.5; g.lineWidth=.6+d*1.3; g.strokeStyle=d>.55?B:A;
+      g.beginPath(); g.moveTo(P[0],P[1]); g.lineTo(Q[0],Q[1]); g.stroke();});
+    for(const r of R){const[x,y]=pr(r),d=Math.max(0,Math.min(1,(r[2]+1)/2));
+      g.globalAlpha=.25+d*.7; g.fillStyle="#dfe8f7"; g.beginPath(); g.arc(x,y,1.1+d*2.1,0,6.283); g.fill();}
+    g.globalAlpha=1;
+  })(0);
+})();
+
+document.addEventListener("pointermove", e=>{
+  const m=e.target.closest(".mod"); if(!m) return;
+  const r=m.getBoundingClientRect();
+  m.style.setProperty("--mx",(e.clientX-r.left)+"px");
+  m.style.setProperty("--my",(e.clientY-r.top)+"px");
+},{passive:true});
+
+boot();
+</script>
+<script src="offline.js"></script><script src="nav.js"></script></body></html>

@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>3D Studio</title>
+<style>
+/* The studio is dark because the work is: a bright shell around a
+   dark motion post makes every preview look wrong before it is judged. */
+:root{
+  --bg:#07090d;--panel:#0d1117;--panel2:#11171f;--line:#1c232e;--ink:#eef2f7;
+  --dim:#8b97a8;--faint:#5a6578;--accent:#4f8cff;--accent2:#8e55ff;--warn:#f0a35e;
+  --ok:#46d6a0;--r:12px;--ease:cubic-bezier(.2,.7,.2,1);
+  --f:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f);
+  -webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(820px 560px at 84% -8%,color-mix(in srgb,var(--accent2) 15%,transparent),transparent 70%),
+             radial-gradient(680px 480px at 6% 14%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 72%)}
+.wrap{position:relative;max-width:1240px;margin:0 auto;padding:30px 20px 70px}
+h1{margin:0;font-size:clamp(21px,3vw,30px);font-weight:600;letter-spacing:-.03em}
+.eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:8px}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;margin-top:26px;align-items:start}
+@media(max-width:900px){.lay{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+  background:#04060a;aspect-ratio:4/5}
+#c{display:block;width:100%;height:100%}
+.hud{position:absolute;left:12px;bottom:12px;display:flex;gap:7px;align-items:center;
+  font-family:var(--m);font-size:10.5px;color:var(--dim);
+  background:color-mix(in srgb,#000 55%,transparent);backdrop-filter:blur(8px);
+  padding:6px 11px;border-radius:999px;border:1px solid var(--line)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.dot.rec{background:#ff4d5e;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:16px;padding:18px}
+.lab{display:block;font-family:var(--m);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin:14px 0 7px}
+.lab:first-child{margin-top:0}
+input,select,textarea{width:100%;background:#0f141b;color:var(--ink);border:1px solid var(--line);
+  border-radius:10px;padding:10px 11px;font:inherit;font-size:13px;
+  transition:box-shadow .25s var(--ease),border-color .2s var(--ease)}
+textarea{min-height:76px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:transparent;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 65%,transparent)}
+input[type=color]{height:40px;padding:3px;cursor:pointer}
+.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+.btn{width:100%;margin-top:14px;border:0;border-radius:11px;padding:13px;font:inherit;
+  font-weight:600;color:#05080f;cursor:pointer;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));
+  box-shadow:0 10px 28px -16px color-mix(in srgb,var(--accent) 90%,transparent);
+  transition:transform .16s var(--ease),filter .2s var(--ease)}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.07)}
+.btn:active{transform:none}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.scenes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sc{background:#0f141b;border:1px solid var(--line);border-radius:10px;padding:10px;cursor:pointer;
+  font:inherit;color:var(--dim);text-align:left;transition:all .2s var(--ease)}
+.sc:hover{border-color:var(--faint);color:var(--ink);transform:translateY(-1px)}
+.sc[aria-pressed=true]{border-color:transparent;color:#05080f;
+  background:linear-gradient(100deg,var(--accent),var(--accent2))}
+.sc b{display:block;font-size:12.5px;font-weight:600}
+.sc span{font-size:10.5px;opacity:.8}
+.note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
+.warn{color:var(--warn)}
+.ok{color:var(--ok)}
+.bar{height:5px;background:#131922;border-radius:999px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));transition:width .2s linear}
+.xp{display:flex;align-items:center;gap:10px;margin-top:16px;padding-top:14px;
+  border-top:1px solid var(--line)}
+.xp .lv{font-family:var(--m);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.xp b{font-family:var(--m);font-size:18px;font-weight:500}
+</style></head><body>
+<div class="wrap">
+  <div class="eyebrow">Craftly</div>
+  <h1>3D Studio</h1>
+
+  <div class="lay">
+    <div>
+      <div class="stage"><canvas id="c" width="1080" height="1350"></canvas>
+        <div class="hud"><span class="dot" id="dot"></span><span id="hud">ready</span></div>
+      </div>
+      <p class="note" id="msg"></p>
+    </div>
+
+    <div class="panel">
+      <span class="lab">Scene</span>
+      <div class="scenes" id="scenes"></div>
+
+      <span class="lab">Headline</span>
+      <textarea id="line">A PPP transfers the risk, not the project.</textarea>
+
+      <span class="lab">Wordmark</span>
+      <input id="mark" value="iCORE">
+
+      <span class="lab">Colours</span>
+      <div class="row">
+        <input id="acc" type="color" value="#2f9e63">
+        <input id="base" type="color" value="#0e2340">
+      </div>
+
+      <span class="lab">Length</span>
+      <div class="row">
+        <select id="secs">
+          <option value="6">6 seconds</option>
+          <option value="10" selected>10 seconds</option>
+          <option value="15">15 seconds</option>
+        </select>
+        <select id="size">
+          <option value="1080x1350" selected>4:5 feed</option>
+          <option value="1080x1920">9:16 story</option>
+          <option value="1080x1080">1:1 square</option>
+        </select>
+      </div>
+
+      <button class="btn" id="rec">Record the video</button>
+      <button class="btn sec" id="png">Save this frame</button>
+      <div class="bar"><i id="prog"></i></div>
+
+      <div class="xp">
+        <div style="flex:1"><div class="lv">Studio level</div><b id="lvl">1</b></div>
+        <div style="flex:2"><div class="lv" id="xptxt">0 / 3 to level 2</div>
+          <div class="bar" style="margin-top:6px"><i id="xpbar"></i></div></div>
+      </div>
+      <p class="note" id="badge"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   A 3D post, drawn and recorded in the browser.
+
+   Two separate claims, kept separate because they are often confused:
+
+   1. The 3D is real 3D — vertices, rotation matrices, a perspective
+      divide, painter's-algorithm depth sorting. It is written out
+      rather than imported so the page has no dependency and works on a
+      network that blocks CDNs.
+
+   2. The video needs no ffmpeg and no server. MediaRecorder reads the
+      canvas through captureStream() and writes WebM. That is a browser
+      standard, it costs nothing, and it is how the Nexus project story
+      exports.
+
+   What that does NOT mean, and the interface says so rather than
+   hiding it: recording happens in REAL TIME — ten seconds of video
+   takes ten seconds — and the output is WebM, which LinkedIn and X
+   accept and which Instagram does not. For MP4 the file goes through
+   the studio's ffmpeg once. Both routes are offered; neither is
+   described as the other.
+   ══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const cv = $("c"), g = cv.getContext("2d", { alpha: false });
+
+const SCENES = {
+  monolith: ["Monolith", "A slab turning in light"],
+  lattice:  ["Lattice",  "An icosahedral frame"],
+  ribbon:   ["Ribbon",   "A band folding through space"],
+  field:    ["Field",    "A terrain of points"]
+};
+let scene = "monolith", recording = false, t0 = performance.now();
+
+/* ---- state the person earns, kept honestly: it counts what they made --- */
+const XP = {
+  get made(){ try { return +localStorage.getItem("craftly.made") || 0 } catch(e){ return 0 } },
+  set made(v){ try { localStorage.setItem("craftly.made", v) } catch(e){} },
+  level(){ return Math.floor(this.made / 3) + 1; },
+  into(){ return this.made % 3; },
+  paint(){
+    $("lvl").textContent = this.level();
+    $("xptxt").textContent = this.into() + " / 3 to level " + (this.level()+1);
+    $("xpbar").style.width = (this.into()/3*100) + "%";
+    const b = ["", "First video made", "Three videos — Operator",
+               "Six videos — Studio hand", "Nine videos — Director"][Math.min(4, this.level())];
+    $("badge").textContent = b ? "Unlocked: " + b : "";
+  }
+};
+
+/* ---- colour ---------------------------------------------------------- */
+const hex2rgb = h => { h = h.replace("#",""); if (h.length===3) h=[...h].map(c=>c+c).join("");
+  return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); };
+const mix = (a,b,t) => a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+
+/* ---- 3D ------------------------------------------------------------- */
+const rotX = (p,a)=>{const c=Math.cos(a),s=Math.sin(a);return [p[0],p[1]*c-p[2]*s,p[1]*s+p[2]*c]};
+const rotY = (p,a)=>{const c=Math.cos(a),s=Math.sin(a);return [p[0]*c-p[2]*s,p[1],p[0]*s+p[2]*c]};
+const rotZ = (p,a)=>{const c=Math.cos(a),s=Math.sin(a);return [p[0]*c-p[1]*s,p[0]*s+p[1]*c,p[2]]};
+
+function makeGeo(kind){
+  if (kind === "lattice"){
+    const t=(1+Math.sqrt(5))/2, V=[];
+    for (const [a,b] of [[1,t],[-1,t],[1,-t],[-1,-t]]) V.push([0,a,b],[b,0,a],[a,b,0]);
+    const verts = V.map(v=>{const l=Math.hypot(...v);return v.map(x=>x/l)});
+    const E=[];
+    for(let i=0;i<verts.length;i++) for(let j=i+1;j<verts.length;j++)
+      E.push([i,j,Math.hypot(verts[i][0]-verts[j][0],verts[i][1]-verts[j][1],verts[i][2]-verts[j][2])]);
+    E.sort((a,b)=>a[2]-b[2]);
+    return { verts, edges: E.slice(0,30).map(e=>[e[0],e[1]]), faces: [] };
+  }
+  if (kind === "monolith"){
+    const w=.62,h=1.0,d=.14, verts=[];
+    for (const sx of [-1,1]) for (const sy of [-1,1]) for (const sz of [-1,1])
+      verts.push([sx*w, sy*h, sz*d]);
+    const faces = [[0,1,3,2],[4,6,7,5],[0,4,5,1],[2,3,7,6],[0,2,6,4],[1,5,7,3]];
+    const edges = [[0,1],[1,3],[3,2],[2,0],[4,5],[5,7],[7,6],[6,4],[0,4],[1,5],[2,6],[3,7]];
+    return { verts, edges, faces };
+  }
+  if (kind === "ribbon"){
+    const verts=[], faces=[], N=46;
+    for (let i=0;i<=N;i++){
+      const u = i/N, a = u*Math.PI*2.4, r = .78;
+      const x = Math.cos(a)*r, z = Math.sin(a)*r, y = -0.9 + u*1.8;
+      verts.push([x, y, z], [x*0.72, y, z*0.72]);
+    }
+    for (let i=0;i<N;i++) faces.push([i*2, i*2+1, i*2+3, i*2+2]);
+    return { verts, edges: [], faces };
+  }
+  const verts=[], faces=[], N=15;                 // field
+  for (let i=0;i<=N;i++) for (let j=0;j<=N;j++)
+    verts.push([(i/N-.5)*2.0, 0, (j/N-.5)*2.0]);
+  for (let i=0;i<N;i++) for (let j=0;j<N;j++){
+    const a=i*(N+1)+j; faces.push([a,a+1,a+N+2,a+N+1]);
+  }
+  return { verts, edges: [], faces, grid:{N} };
+}
+
+function frame(ts){
+  const W = cv.width, H = cv.height;
+  const T = (ts - t0) / 1000;
+  const acc = hex2rgb($("acc").value), base = hex2rgb($("base").value);
+  const geo = makeGeo(scene);
+
+  /* ground */
+  const grd = g.createLinearGradient(0,0,W*0.4,H);
+  grd.addColorStop(0, rgb(mix(base,[0,0,0],0.35)));
+  grd.addColorStop(0.55, rgb(base));
+  grd.addColorStop(1, rgb(mix(base,acc,0.22)));
+  g.fillStyle = grd; g.fillRect(0,0,W,H);
+
+  const S = Math.min(W,H) * 0.30;
+  const cx = W*0.5, cy = H*0.44;
+  const project = p => { const d=3.6, k=d/(d-p[2]); return [cx+p[0]*S*k, cy+p[1]*S*k, k]; };
+  const ay = T*0.55, ax = Math.sin(T*0.42)*0.33 - 0.24;
+
+  const R = geo.verts.map(v => {
+    let p = v;
+    if (scene === "field"){
+      const w = Math.sin((v[0]*2.2 + T*1.3)) * .12 + Math.cos((v[2]*2.6 - T*1.1)) * .12;
+      p = [v[0], v[1] + w, v[2]];
+      p = rotX(p, -0.95 + Math.sin(T*0.3)*0.06); p = rotY(p, T*0.18);
+      return p;
+    }
+    p = rotY(p, ay); p = rotX(p, ax);
+    if (scene === "ribbon") p = rotZ(p, Math.sin(T*0.5)*0.22);
+    return p;
+  });
+
+  /* faces, far to near */
+  const polys = geo.faces.map(f => {
+    const z = f.reduce((s,i)=>s+R[i][2],0)/f.length;
+    return { f, z };
+  }).sort((a,b)=>a.z-b.z);
+
+  for (const {f,z} of polys){
+    const pts = f.map(i => project(R[i]));
+    // a cheap lambert: the face normal against a fixed light
+    const [A,B,C] = [R[f[0]],R[f[1]],R[f[2]]];
+    const u=[B[0]-A[0],B[1]-A[1],B[2]-A[2]], v=[C[0]-A[0],C[1]-A[1],C[2]-A[2]];
+    const n=[u[1]*v[2]-u[2]*v[1], u[2]*v[0]-u[0]*v[2], u[0]*v[1]-u[1]*v[0]];
+    const nl=Math.hypot(...n)||1;
+    const lam = Math.max(0, (n[0]*0.35 + n[1]*0.62 + n[2]*0.70)/nl);
+    const depth = Math.max(0, Math.min(1, (z+1)/2));
+    const col = mix(mix(base, acc, 0.35 + depth*0.45), [255,255,255], lam*0.55);
+    g.fillStyle = rgb(col);
+    g.globalAlpha = scene === "field" ? 0.30 + depth*0.55 : 0.88;
+    g.beginPath(); g.moveTo(pts[0][0],pts[0][1]);
+    for (let i=1;i<pts.length;i++) g.lineTo(pts[i][0],pts[i][1]);
+    g.closePath(); g.fill();
+    if (scene !== "field"){
+      g.globalAlpha = 0.5; g.lineWidth = 1.2;
+      g.strokeStyle = rgb(mix(acc,[255,255,255],0.4)); g.stroke();
+    }
+  }
+
+  /* edges */
+  g.globalAlpha = 1;
+  const drawn = geo.edges.map(([i,j])=>({i,j,z:(R[i][2]+R[j][2])/2})).sort((a,b)=>a.z-b.z);
+  for (const e of drawn){
+    const A=project(R[e.i]), B=project(R[e.j]);
+    const depth = Math.max(0,Math.min(1,(e.z+1)/2));
+    g.globalAlpha = .16 + depth*.62; g.lineWidth = (1 + depth*2.4) * (W/1080);
+    g.strokeStyle = rgb(mix(acc,[255,255,255],depth*0.5));
+    g.beginPath(); g.moveTo(A[0],A[1]); g.lineTo(B[0],B[1]); g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  /* type, over a scrim so it reads whatever the geometry is doing */
+  const m = W*0.085;
+  const sg = g.createLinearGradient(0,H*0.46,0,H);
+  sg.addColorStop(0,"rgba(0,0,0,0)"); sg.addColorStop(1, rgb(mix(base,[0,0,0],0.55)));
+  g.fillStyle = sg; g.fillRect(0,H*0.46,W,H*0.54);
+
+  g.fillStyle = "#fff"; g.textBaseline = "top";
+  g.font = `700 ${Math.round(W*0.030)}px "Instrument Sans",system-ui,sans-serif`;
+  g.fillText($("mark").value || "", m, H*0.055);
+
+  const words = ($("line").value || "").split(/\s+/);
+  const size = Math.round(W*0.072);
+  g.font = `600 ${size}px "Instrument Sans",system-ui,sans-serif`;
+  const lines=[]; let cur="";
+  for (const w of words){ const t=(cur?cur+" ":"")+w;
+    if (g.measureText(t).width <= W-2*m || !cur) cur=t; else { lines.push(cur); cur=w; } }
+  if (cur) lines.push(cur);
+  const lh = size*1.14;
+  let y = H - H*0.11 - lines.length*lh;
+  g.fillStyle = rgb(mix(acc,[255,255,255],0.25));
+  g.fillRect(m, y - size*0.52, W*0.09, Math.max(3, W*0.005));
+  g.fillStyle = "#fff";
+  const reveal = Math.min(1, Math.max(0, (T-0.35)/0.9));     // the type arrives
+  lines.forEach((ln,i)=>{
+    const a = Math.min(1, Math.max(0, reveal*lines.length - i));
+    g.globalAlpha = a; g.fillText(ln, m, y + i*lh + (1-a)*18);
+  });
+  g.globalAlpha = 1;
+
+  if (recording) raf = requestAnimationFrame(frame);
+  else raf = requestAnimationFrame(frame);
+}
+let raf = requestAnimationFrame(frame);
+
+/* ---- scene picker ---------------------------------------------------- */
+$("scenes").innerHTML = Object.entries(SCENES).map(([k,[n,d]])=>
+  `<button class="sc" data-k="${k}" aria-pressed="${k===scene}"><b>${n}</b><span>${d}</span></button>`).join("");
+$("scenes").onclick = e => { const b=e.target.closest(".sc"); if(!b) return;
+  scene=b.dataset.k; t0=performance.now();
+  [...$("scenes").children].forEach(c=>c.setAttribute("aria-pressed", c.dataset.k===scene)); };
+
+$("size").onchange = () => { const [w,h]=$("size").value.split("x").map(Number);
+  cv.width=w; cv.height=h; document.querySelector(".stage").style.aspectRatio = w+"/"+h; };
+
+/* ---- the recording --------------------------------------------------- */
+function support(){
+  if (typeof MediaRecorder === "undefined" || !cv.captureStream)
+    return {ok:false, why:"This browser cannot record from a canvas. Chrome, Edge and Firefox can."};
+  const mime = ["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"]
+    .find(m => MediaRecorder.isTypeSupported(m));
+  return mime ? {ok:true, mime} : {ok:false, why:"This browser has no WebM encoder."};
+}
+
+$("rec").onclick = () => {
+  const s = support();
+  if (!s.ok){ $("msg").innerHTML = '<span class="warn">'+s.why+'</span>'; return; }
+  const secs = +$("secs").value;
+  const stream = cv.captureStream(30);
+  const rec = new MediaRecorder(stream, { mimeType: s.mime, videoBitsPerSecond: 6e6 });
+  const chunks = [];
+  rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+  rec.onstop = () => {
+    const blob = new Blob(chunks, {type:"video/webm"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = ($("mark").value||"post").toLowerCase().replace(/\W+/g,"-") + "-3d.webm";
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+    recording = false; $("dot").classList.remove("rec");
+    $("hud").textContent = "ready";
+    $("rec").disabled = false; $("rec").textContent = "Record the video";
+    $("prog").style.width = "0%";
+    $("msg").innerHTML = '<span class="ok">Saved '+(blob.size/1048576).toFixed(1)+
+      ' MB of WebM.</span> LinkedIn and X take WebM directly. For Instagram or TikTok, ' +
+      'put it through the studio once for MP4.';
+    XP.made = XP.made + 1; XP.paint();
+  };
+  t0 = performance.now();
+  recording = true; $("dot").classList.add("rec");
+  $("rec").disabled = true; $("rec").textContent = "Recording…";
+  $("msg").textContent = "Recording happens in real time — " + secs + " seconds.";
+  rec.start(400);
+  const started = performance.now();
+  const tick = setInterval(()=>{
+    const p = Math.min(1,(performance.now()-started)/(secs*1000));
+    $("prog").style.width = (p*100)+"%";
+    $("hud").textContent = "recording " + ((performance.now()-started)/1000).toFixed(1) + "s";
+    if (p >= 1){ clearInterval(tick); try{ rec.stop(); }catch(e){} }
+  }, 100);
+};
+
+$("png").onclick = () => {
+  cv.toBlob(b => { const a=document.createElement("a");
+    a.href=URL.createObjectURL(b);
+    a.download=($("mark").value||"post").toLowerCase().replace(/\W+/g,"-")+"-3d.png";
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000); }, "image/png");
+};
+
+(function init(){
+  const s = support();
+  $("msg").innerHTML = s.ok
+    ? 'Recording runs in this browser — no server, no ffmpeg. It plays the scene once in real time and saves WebM.'
+    : '<span class="warn">'+s.why+'</span>';
+  XP.paint();
+})();
+</script>
+<script src="offline.js"></script><script src="nav.js"></script></body></html>

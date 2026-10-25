@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Document Desk</title>
+<style>
+:root{--bg:#070a0f;--panel:#0d1219;--line:#1c2430;--ink:#eef2f7;--dim:#8794a6;
+      --acc:#3ddc97;--navy:#2b5c9e;--warn:#e0a94b;--fail:#e4635a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:15px/1.6 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:30px 18px 90px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.015em}
+.sub{color:var(--dim);margin:0 0 24px;max-width:66ch}
+.cols{display:grid;gap:18px;grid-template-columns:1fr 400px}
+@media(max-width:940px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.lab{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+     color:var(--dim);margin:14px 0 6px;font-weight:600}
+.lab:first-child{margin-top:0}
+textarea,input,select{width:100%;background:#0a0f16;color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit}
+textarea{min-height:420px;resize:vertical;line-height:1.6;
+  font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:13px}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+.row{display:flex;gap:9px}.row>*{flex:1}
+.btn{width:100%;margin-top:14px;padding:12px;border-radius:11px;border:0;
+  background:var(--acc);color:#04140b;font:600 15px/1 Inter,sans-serif;cursor:pointer}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.note{color:var(--dim);font-size:13px;margin:10px 0 0}
+.warn{color:var(--warn)}.ok{color:var(--acc)}.bad{color:var(--fail)}
+.fmt{display:flex;flex-wrap:wrap;gap:7px}
+.fmt label{flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:7px 12px;
+  border:1px solid var(--line);border-radius:999px;font-size:13px;cursor:pointer}
+.fmt input{width:auto}
+.fmt label:has(input:checked){border-color:var(--acc);color:var(--acc)}
+#outline{margin-top:14px;max-height:360px;overflow:auto}
+.o{display:flex;gap:10px;align-items:baseline;padding:5px 0;
+   border-bottom:1px solid #141b24;font-size:13px}
+.o b{flex:0 0 76px;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+     color:var(--dim);font-weight:700}
+.o.h1 span{font-weight:700}.o.h2 span{font-weight:600;color:var(--acc)}
+.o.title span{font-weight:700;font-size:15px}
+.o span{color:var(--ink)}.o.para span,.o.quote span{color:var(--dim)}
+.dl{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dl a{flex:0 0 auto;padding:9px 14px;border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);text-decoration:none;font-size:13.5px}
+.dl a:hover{border-color:var(--acc)}
+.dl a b{color:var(--acc)}
+.spin{display:inline-block;width:11px;height:11px;margin-right:7px;border-radius:50%;
+  border:2px solid #2b3643;border-top-color:var(--acc);animation:s .7s linear infinite;
+  vertical-align:-1px}
+@keyframes s{to{transform:rotate(360deg)}}
+audio{width:100%;margin-top:10px}
+</style></head><body><div class="wrap">
+
+<h1>Document Desk</h1>
+<p class="sub">Paste plain text. It comes back as a set Word file, a deck, or a PDF —
+with your cover, your colours and your typography. Nothing is written for you: every
+word in the output is a word you put in.</p>
+
+<div class="cols">
+  <div class="panel">
+    <span class="lab">Your text</span>
+    <textarea id="src" placeholder="Paste anything — notes, a draft, minutes, a brief."></textarea>
+    <p class="note" id="stat"></p>
+  </div>
+
+  <div>
+    <div class="panel">
+      <span class="lab">Brand</span>
+      <div class="row">
+        <input id="brand" value="iCore" placeholder="wordmark">
+        <input id="navy" type="color" value="#0e2340" title="title band">
+        <input id="acc" type="color" value="#2f9e63" title="accent">
+      </div>
+      <span class="lab">Footer line</span>
+      <input id="footer" placeholder="Prepared for …">
+
+      <span class="lab">What to make</span>
+      <div class="fmt">
+        <label><input type="checkbox" value="docx" checked> Word</label>
+        <label><input type="checkbox" value="pdf" checked> PDF</label>
+        <label><input type="checkbox" value="pptx"> Deck</label>
+        <label><input type="checkbox" value="pdf_deck"> Deck PDF</label>
+      </div>
+      <label class="note" style="display:flex;gap:7px;align-items:center;margin-top:10px">
+        <input type="checkbox" id="cover" checked style="width:auto"> full-bleed cover page
+      </label>
+
+      <button class="btn sec" id="check">Read my text</button>
+      <button class="btn" id="go">Format it</button>
+      <p class="note" id="msg"></p>
+      <div class="dl" id="dl"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <span class="lab">Music bed</span>
+      <p class="note" style="margin-top:0">Generated here from a seed — not sampled,
+        not downloaded. Nothing to licence and nothing to attribute.</p>
+      <div class="row">
+        <select id="mood"></select>
+        <input id="secs" type="number" value="20" min="3" max="600" title="seconds">
+      </div>
+      <p class="note" id="why"></p>
+      <button class="btn sec" id="mus">Compose a bed</button>
+      <p class="note" id="mmsg"></p>
+      <div id="player"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel" style="margin-top:18px">
+  <span class="lab">What the formatter read</span>
+  <p class="note" style="margin-top:0">Check this before you trust the file. A wrong
+    line here is two seconds to fix in your text and a surprise in a document you have
+    already sent.</p>
+  <div id="outline"><p class="note">Nothing read yet.</p></div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = () => { const t = new URLSearchParams(location.search).get("t");
+                  return t ? "?t=" + encodeURIComponent(t) : ""; };
+const esc = t => (t||"").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function body(extra){
+  return Object.assign({
+    text: $("src").value, brand: $("brand").value.trim(),
+    navy: $("navy").value, accent: $("acc").value,
+    footer: $("footer").value.trim(), cover: $("cover").checked
+  }, extra || {});
+}
+
+async function post(path, payload){
+  const r = await fetch(path + T(), {method:"POST",
+    headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+  const j = await r.json();
+  if (!r.ok || j.error) throw new Error(j.error || ("error " + r.status));
+  return j;
+}
+
+const LABEL = {title:"title", heading:"heading", para:"text", bullets:"list",
+               numbers:"list", table:"table", kv:"facts", quote:"quote"};
+
+function paintOutline(o){
+  if (!o || !o.length){ $("outline").innerHTML =
+    '<p class="note warn">Nothing could be read from that.</p>'; return; }
+  $("outline").innerHTML = o.map(x=>{
+    const cls = x.type === "heading" ? ("h" + (x.level||1)) : x.type;
+    const n = x.n ? '<span style="color:var(--dim)">' + esc(x.n) + '  </span>' : '';
+    const peek = x.peek ? ' <span style="color:var(--dim)">— ' + esc(x.peek) + '</span>' : '';
+    return '<div class="o ' + cls + '"><b>' + (LABEL[x.type]||x.type) + '</b>' +
+           '<span>' + n + esc(x.text) + peek + '</span></div>';
+  }).join("");
+}
+
+$("src").addEventListener("input", ()=>{
+  const t = $("src").value;
+  $("stat").textContent = t.trim()
+    ? t.split(/\s+/).filter(Boolean).length + " words · " +
+      t.split("\n").filter(l=>l.trim()).length + " lines"
+    : "";
+});
+
+$("check").onclick = async ()=>{
+  $("msg").innerHTML = '<span class="spin"></span>Reading…';
+  try{ paintOutline((await post("/api/document", body({outline_only:true}))).outline);
+       $("msg").innerHTML = '<span class="ok">Read. Check the outline below.</span>'; }
+  catch(e){ $("msg").innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+};
+
+$("go").onclick = async ()=>{
+  const formats = [...document.querySelectorAll(".fmt input:checked")].map(i=>i.value);
+  if (!formats.length){ $("msg").innerHTML =
+    '<span class="warn">Pick at least one format.</span>'; return; }
+  $("go").disabled = true;
+  $("msg").innerHTML = '<span class="spin"></span>Setting it…';
+  $("dl").innerHTML = "";
+  try{
+    const j = await post("/api/document", body({formats}));
+    paintOutline(j.outline);
+    const NAME = {docx:"Word", pdf:"PDF", pptx:"Deck", pdf_deck:"Deck PDF"};
+    $("dl").innerHTML = Object.entries(j.files).map(([k,u])=>
+      '<a href="' + u + '" download><b>' + NAME[k] + '</b> · ' +
+      (j.bytes[k]/1024).toFixed(0) + ' KB</a>').join("");
+    $("msg").innerHTML = '<span class="ok">Done — ' + j.blocks + ' blocks set.</span>';
+  }catch(e){ $("msg").innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+  $("go").disabled = false;
+};
+
+(async ()=>{
+  try{
+    const r = await fetch("/api/audio-state" + T());
+    const j = await r.json();
+    if (j.moods){
+      $("mood").innerHTML = Object.entries(j.moods).map(([k,v])=>
+        '<option value="' + k + '">' + k[0].toUpperCase()+k.slice(1) +
+        ' · ' + v.bpm + ' bpm</option>').join("");
+      const show = ()=> $("why").textContent = j.moods[$("mood").value].why;
+      $("mood").onchange = show; show();
+    }
+  }catch(e){}
+})();
+
+$("mus").onclick = async ()=>{
+  $("mmsg").innerHTML = '<span class="spin"></span>Composing…';
+  try{
+    const j = await post("/api/music", {mood:$("mood").value,
+      seconds:+$("secs").value, seed: Math.floor(Math.random()*9999)});
+    $("player").innerHTML = '<audio controls src="' + j.file + '"></audio>' +
+      '<p class="note"><a href="' + j.file + '" download style="color:var(--acc)">' +
+      'Download</a> · ' + (j.bytes/1024).toFixed(0) + ' KB</p>';
+    $("mmsg").innerHTML = '<span class="ok">' + esc(j.licence) + '</span>';
+  }catch(e){ $("mmsg").innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+};
+</script></div><script src="offline.js"></script><script src="nav.js"></script></body></html>

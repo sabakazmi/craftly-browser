@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Brand Studio</title>
+<style>
+:root{--bg:#070a0f;--panel:#0d1219;--line:#1c2430;--ink:#eef2f7;--dim:#8794a6;
+      --acc:#3ddc97;--warn:#e0a94b;--fail:#e4635a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+ font:15px/1.62 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+ -webkit-font-smoothing:antialiased}
+.wrap{max-width:1240px;margin:0 auto;padding:34px 18px 100px}
+h1{font-size:28px;margin:0 0 6px;letter-spacing:-.02em}
+.lede{color:var(--dim);max-width:64ch;margin:0 0 24px}
+.cols{display:grid;gap:18px;grid-template-columns:376px 1fr}
+@media(max-width:920px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.lab{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+ color:var(--dim);margin:16px 0 7px;font-weight:600}.lab:first-child{margin-top:0}
+input,select{width:100%;background:#0a0f16;color:var(--ink);border:1px solid var(--line);
+ border-radius:10px;padding:11px 13px;font:inherit}
+input:focus,select:focus{outline:none;border-color:var(--acc)}
+.row{display:flex;gap:9px}.row>*{flex:1}
+.btn{width:100%;margin-top:16px;padding:12px;border-radius:11px;border:0;
+ background:var(--acc);color:#04140b;font:600 15px/1 Inter,sans-serif;cursor:pointer}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.note{color:var(--dim);font-size:13px;margin:10px 0 0}
+.ok{color:var(--acc)}.warn{color:var(--warn)}.bad{color:var(--fail)}
+.swatch{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.sw{width:52px;height:46px;border-radius:9px;border:1px solid #1e2732;position:relative}
+.sw em{position:absolute;bottom:-17px;left:0;font-style:normal;font-size:9px;color:var(--dim)}
+.ramp{display:flex;border-radius:9px;overflow:hidden;margin-top:4px}
+.ramp div{flex:1;height:38px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(248px,1fr))}
+.card{background:#0a0f16;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.card .pv{background:#fff;padding:16px;display:flex;align-items:center;justify-content:center;
+ min-height:132px}
+.card .pv.dark{background:#0e2340}
+.card .pv svg{max-width:100%;height:auto}
+.card .meta{padding:12px 14px}
+.card .meta b{font-size:13.5px}
+.card .meta p{margin:4px 0 0;color:var(--dim);font-size:12px;line-height:1.45}
+.lk{display:flex;gap:5px;padding:0 14px 12px}
+.lk button{flex:1;background:transparent;border:1px solid var(--line);color:var(--dim);
+ border-radius:8px;padding:5px;font:inherit;font-size:10.5px;cursor:pointer}
+.lk button[aria-pressed=true]{border-color:var(--acc);color:var(--acc)}
+.dl{display:block;margin:0 14px 13px;text-align:center;padding:7px;border:1px solid var(--line);
+ border-radius:9px;color:var(--ink);text-decoration:none;font-size:12.5px}
+.dl:hover{border-color:var(--acc)}
+.spin{display:inline-block;width:11px;height:11px;margin-right:7px;border-radius:50%;
+ border:2px solid #2b3643;border-top-color:var(--acc);animation:s .7s linear infinite;vertical-align:-1px}
+@keyframes s{to{transform:rotate(360deg)}}
+.tk{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--dim);
+ background:#0a0f16;border:1px solid var(--line);border-radius:11px;padding:13px;
+ max-height:230px;overflow:auto;white-space:pre;margin-top:8px}
+</style></head><body><div class="wrap">
+
+<h1>Brand Studio</h1>
+<p class="lede">A palette built in a perceptual colour space, a type pairing with a
+reason, and marks drawn from geometry rather than picked from a library. Every
+pairing is contrast-checked before the kit is handed over.</p>
+
+<div class="cols">
+  <div class="panel">
+    <span class="lab">Company</span>
+    <input id="name" value="iCore" placeholder="name">
+    <span class="lab">Sector</span>
+    <input id="sector" value="consulting" placeholder="consulting, saas, retail…">
+    <span class="lab">Tagline</span>
+    <input id="tag" value="Business Solutions" placeholder="optional">
+    <span class="lab">Colour</span>
+    <div class="row">
+      <input id="base" type="color" value="#2f9e63" title="lead">
+      <input id="deep" type="color" value="#0e2340" title="deep (optional)">
+      <select id="scheme">
+        <option value="analogous">Analogous</option>
+        <option value="monochrome">Monochrome</option>
+        <option value="split">Split complement</option>
+        <option value="complement">Complement</option>
+        <option value="triad">Triad</option>
+      </select>
+    </div>
+    <p class="note" id="why"></p>
+    <button class="btn" id="go">Build the kit</button>
+    <button class="btn sec" id="more">More marks</button>
+    <p class="note" id="msg"></p>
+
+    <div id="pal"></div>
+    <span class="lab" id="tklab" style="display:none">Design tokens</span>
+    <div class="tk" id="tk" style="display:none"></div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <span class="lab">Marks</span>
+      <p class="note" style="margin-top:0">Each is constructed from a rule, not
+        assembled from clip art — so two seeds give two different marks rather than
+        the same mark in another colour. Download as SVG: editable, and it scales
+        to a building.</p>
+      <div class="grid" id="logos" style="margin-top:14px"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const T=()=>{const t=new URLSearchParams(location.search).get("t");return t?"?t="+encodeURIComponent(t):"";};
+const esc=t=>(t||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let SEED = 1, KIT = null;
+
+async function post(path, body){
+  const r=await fetch(path+T(),{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(body)});
+  const j=await r.json(); if(!r.ok||j.error) throw new Error(j.error||("error "+r.status));
+  return j;
+}
+const body = () => ({name:$("name").value.trim()||"iCore", sector:$("sector").value.trim(),
+  base:$("base").value, deep:$("deep").value, scheme:$("scheme").value,
+  seed:SEED, tagline:$("tag").value.trim()});
+
+function paintPalette(t, audit){
+  const c=t.colour;
+  const sw=(hex,label)=>`<div class="sw" style="background:${hex}"><em>${label}</em></div>`;
+  $("pal").innerHTML =
+    '<span class="lab">Palette</span><div class="swatch">'+
+      sw(c.lead,"lead")+sw(c.lead_text,"text")+sw(c.deep,"deep")+
+      sw(c.ink,"ink")+sw(c.paper,"paper")+
+      (c.support||[]).slice(0,2).map((h,i)=>sw(h,"sup"+(i+1))).join("")+
+    '</div><div style="height:20px"></div>'+
+    '<span class="lab">Tonal ramp</span><div class="ramp">'+
+      (c.ramp||[]).map(h=>`<div style="background:${h}"></div>`).join("")+'</div>'+
+    '<span class="lab">Type</span><p class="note" style="margin-top:0">'+
+      '<b style="color:var(--ink)">'+esc(t.type.head)+'</b> over <b style="color:var(--ink)">'+
+      esc(t.type.body)+'</b></p>'+
+    '<span class="lab">Contrast</span>'+
+      Object.entries(t.contrast).map(([k,v])=>
+        '<p class="note" style="margin:3px 0"><span class="'+(v>=4.5?"ok":"warn")+
+        '">'+v+':1</span> &nbsp;'+esc(k)+'</p>').join("")+
+    ((audit.notes||[]).map(n=>'<p class="note warn">'+esc(n)+'</p>').join(""))+
+    ((audit.problems||[]).map(n=>'<p class="note bad">'+esc(n)+'</p>').join(""));
+  $("tklab").style.display="block"; $("tk").style.display="block";
+  $("tk").textContent = JSON.stringify(t, null, 2);
+}
+
+function paintLogos(set){
+  $("logos").innerHTML = set.candidates.map((c,i)=>
+   `<div class="card" data-i="${i}">
+      <div class="pv" id="pv${i}">${c.lockups.horizontal}</div>
+      <div class="meta"><b>${esc(c.family)}</b><p>${esc(c.why)}</p></div>
+      <div class="lk">
+        ${["horizontal","stacked","mark","wordmark","reverse"].map(lk=>
+          `<button data-lk="${lk}" aria-pressed="${lk==='horizontal'}">${lk.slice(0,4)}</button>`).join("")}
+      </div>
+      <a class="dl" download="${esc(set.name)}-${esc(c.family)}.svg">Download SVG</a>
+    </div>`).join("");
+  set.candidates.forEach((c,i)=>{
+    const card=$("logos").querySelector(`[data-i="${i}"]`);
+    const pv=card.querySelector(".pv"), dl=card.querySelector(".dl");
+    const show = lk => {
+      const svg = lk==="reverse" ? c.reverse : c.lockups[lk];
+      pv.innerHTML = svg; pv.classList.toggle("dark", lk==="reverse");
+      dl.href = "data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+      card.querySelectorAll(".lk button").forEach(b=>
+        b.setAttribute("aria-pressed", b.dataset.lk===lk));
+    };
+    card.querySelector(".lk").onclick = e => {
+      const b=e.target.closest("button"); if(b) show(b.dataset.lk); };
+    show("horizontal");
+  });
+}
+
+async function build(){
+  $("msg").innerHTML='<span class="spin"></span>Building…';
+  try{
+    const k = await post("/api/brand/kit", body());
+    KIT = k; paintPalette(k.tokens, k.audit||{});
+    const s = await post("/api/brand/logos", body());
+    paintLogos(s);
+    $("why").textContent = k.tokens.colour && s.palette ? s.palette.why : "";
+    $("msg").innerHTML='<span class="ok">'+s.candidates.length+
+      ' marks. '+esc(s.clear_space)+'</span>';
+  }catch(e){ $("msg").innerHTML='<span class="bad">'+esc(e.message)+'</span>'; }
+}
+$("go").onclick = ()=>{ SEED = 1 + Math.floor(Math.random()*9000); build(); };
+$("more").onclick = ()=>{ SEED += 7; build(); };
+build();
+</script></div><script src="offline.js"></script><script src="nav.js"></script></body></html>

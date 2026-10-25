@@ -1,0 +1,871 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Content Studio</title>
+<style>
+/* ──────────────────────────────────────────────────────────────────────
+   A dark, cinematic surface. The work this tool makes is mostly dark,
+   bold and photographic, and a bright grey panel around it flattens
+   everything shown inside. Depth here comes from two soft colour fields
+   and a hairline, not from drop shadows: shadows on a dark ground read
+   as smudges. Motion is short and eased-out — 180 to 420ms — because
+   anything slower stops feeling like a response and starts feeling
+   like a wait, and every transition is cancelled under
+   prefers-reduced-motion rather than merely shortened.
+   ────────────────────────────────────────────────────────────────── */
+:root{
+  --bg:#07090d; --panel:#0d1117; --panel-2:#11171f; --ink:#eef2f7;
+  --dim:#8b97a8; --faint:#5a6578; --line:#1c232e; --soft:#151c25;
+  --field:#0f141b; --accent:#4f8cff; --accent-2:#8e55ff; --on-accent:#05080f;
+  --accent-soft:#111c33; --warn:#f0a35e; --ok:#46d6a0; --r:12px;
+  --f:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --m:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f);line-height:1.5;
+  -webkit-font-smoothing:antialiased;font-size:14px;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(900px 620px at 82% -10%, color-mix(in srgb,var(--accent-2) 15%,transparent), transparent 70%),
+    radial-gradient(760px 520px at 4% 12%, color-mix(in srgb,var(--accent) 12%,transparent), transparent 72%)}
+.wrap{position:relative;z-index:1;max-width:1180px;margin:0 auto;padding-inline:18px;padding-block:0 80px}
+h1,h2,h3{margin:0;text-wrap:balance}
+.mono{font-family:var(--m);font-variant-numeric:tabular-nums}
+button{font:inherit;cursor:pointer}
+::selection{background:color-mix(in srgb,var(--accent) 40%,transparent)}
+
+/* ── masthead, with the scene behind it ─────────────────────────────── */
+.stage{position:relative;margin:0 -18px 0;padding:0 18px;overflow:hidden;min-height:208px;
+  border-bottom:1px solid var(--line)}
+/* the scene lives in the right third and fades out before it reaches the
+   type, so the masthead never has to compete with it for legibility */
+#scene{position:absolute;top:0;right:-4%;width:62%;height:100%;display:block;opacity:.9;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 42%);
+  mask-image:linear-gradient(90deg,transparent,#000 42%)}
+.stage .inner{position:relative;z-index:1;display:flex;justify-content:space-between;
+  align-items:flex-end;gap:18px;flex-wrap:wrap;padding:62px 0 28px;min-height:208px}
+@media(max-width:700px){#scene{width:88%;opacity:.55}.stage{min-height:176px}
+  .stage .inner{padding:44px 0 20px;min-height:176px}}
+.hdr{display:contents}
+.hdr h1,#title{font-size:clamp(23px,3.4vw,34px);font-weight:600;letter-spacing:-.035em;
+  line-height:1.05}
+.eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:9px}
+/* the masthead meta sits over the scene, so it carries its own ground —
+   type over moving artwork is the classic way to lose a line of text */
+.meta{font-family:var(--m);font-size:10.5px;color:var(--dim);text-transform:uppercase;
+  letter-spacing:.08em;text-align:right;line-height:1.8;padding:8px 12px;border-radius:10px;
+  background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(10px);
+  border:1px solid color-mix(in srgb,var(--line) 70%,transparent)}
+
+/* ── step rail ──────────────────────────────────────────────────────── */
+.steps{display:flex;gap:7px;margin:20px 0 22px;flex-wrap:wrap}
+.step{position:relative;font-family:var(--m);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;padding:7px 14px;border-radius:999px;border:1px solid var(--line);
+  color:var(--faint);transition:color .28s var(--ease),border-color .28s var(--ease)}
+.step.on{color:var(--on-accent);border-color:transparent;
+  background:linear-gradient(100deg,var(--accent),var(--accent-2))}
+
+/* ── surfaces ───────────────────────────────────────────────────────── */
+.card{position:relative;background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px;
+  animation:rise .5s var(--ease) both}
+.card:nth-of-type(2){animation-delay:.04s}
+.card:nth-of-type(3){animation-delay:.08s}
+.card:nth-of-type(4){animation-delay:.12s}
+.card:nth-of-type(5){animation-delay:.16s}
+.lab{font-family:var(--m);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:11px;display:block}
+.grid{display:grid;gap:9px}
+.g3{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.g2{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+
+/* ── choices ────────────────────────────────────────────────────────── */
+.opt{position:relative;display:flex;gap:11px;align-items:flex-start;text-align:left;width:100%;
+  background:var(--field);border:1px solid var(--line);border-radius:var(--r);padding:13px 14px;
+  color:inherit;overflow:hidden;
+  transition:border-color .22s var(--ease),transform .18s var(--ease),background .22s var(--ease)}
+.opt::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(420px 120px at var(--mx,50%) var(--my,50%),
+    color-mix(in srgb,var(--accent) 14%,transparent), transparent 60%);
+  opacity:0;transition:opacity .26s var(--ease)}
+.opt:hover{border-color:color-mix(in srgb,var(--accent) 45%,var(--line));transform:translateY(-2px)}
+.opt:hover::after{opacity:1}
+.opt:active{transform:translateY(0) scale(.994)}
+.opt[aria-pressed=true]{border-color:color-mix(in srgb,var(--accent) 70%,transparent);
+  background:var(--accent-soft)}
+.opt:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mk{width:15px;height:15px;border:1.5px solid var(--faint);border-radius:5px;flex:none;margin-top:3px;
+  transition:background .2s var(--ease),border-color .2s var(--ease),transform .2s var(--ease)}
+.opt[aria-pressed=true] .mk{background:linear-gradient(140deg,var(--accent),var(--accent-2));
+  border-color:transparent;transform:scale(1.08)}
+.opt b{display:block;font-size:13px;font-weight:600;letter-spacing:-.005em}
+.opt span{display:block;font-size:11.5px;color:var(--dim);margin-top:2px;line-height:1.38}
+
+/* ── fields ─────────────────────────────────────────────────────────── */
+input,textarea,select{width:100%;background:var(--field);color:var(--ink);border:1px solid var(--line);
+  border-radius:var(--r);padding:11px 12px;font:inherit;font-size:13.5px;
+  transition:border-color .2s var(--ease),box-shadow .25s var(--ease)}
+textarea{min-height:92px;resize:vertical;line-height:1.55}
+input:focus,textarea:focus,select:focus{outline:none;border-color:transparent;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 65%,transparent),
+             0 0 26px -8px color-mix(in srgb,var(--accent) 60%,transparent)}
+input[type=color]{padding:3px;height:42px;cursor:pointer}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1 1 180px;min-width:0}
+
+/* ── buttons ────────────────────────────────────────────────────────── */
+.btn{position:relative;background:linear-gradient(100deg,var(--accent),var(--accent-2));
+  color:var(--on-accent);border:0;border-radius:var(--r);padding:13px 22px;font-weight:600;
+  font-size:14px;overflow:hidden;isolation:isolate;
+  transition:transform .16s var(--ease),filter .2s var(--ease),box-shadow .3s var(--ease);
+  box-shadow:0 10px 30px -16px color-mix(in srgb,var(--accent) 90%,transparent)}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.07);
+  box-shadow:0 16px 40px -18px color-mix(in srgb,var(--accent-2) 95%,transparent)}
+.btn:active{transform:translateY(0) scale(.985)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none;filter:none}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.sec:hover{border-color:var(--faint);filter:none}
+.btn.sm{padding:8px 14px;font-size:12px;font-weight:500;border-radius:9px;
+  background:var(--panel-2);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+.btn.sm:hover{border-color:color-mix(in srgb,var(--accent) 50%,var(--line));filter:none}
+.ripple{position:absolute;border-radius:50%;transform:scale(0);pointer-events:none;
+  background:color-mix(in srgb,#fff 55%,transparent);animation:ripple .55s var(--ease) forwards;z-index:-1}
+.bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.note{font-size:12.5px;color:var(--dim);margin-top:9px}
+.err{color:var(--warn)}
+
+/* ── plan editor ────────────────────────────────────────────────────── */
+.item{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin-bottom:10px;
+  overflow:hidden;transition:border-color .22s var(--ease)}
+.item:hover{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.ihead{display:flex;gap:11px;align-items:center;padding:13px 15px;cursor:pointer;
+  border-bottom:1px solid transparent;transition:background .2s var(--ease)}
+.ihead:hover{background:var(--soft)}
+.item.open .ihead{border-bottom-color:var(--line)}
+.ihead i{font-style:normal;font-family:var(--m);font-size:10px;color:var(--faint);
+  text-transform:uppercase;letter-spacing:.09em;min-width:30px}
+.ihead em{font-style:normal;font-family:var(--m);font-size:9.5px;color:var(--accent);
+  text-transform:uppercase;letter-spacing:.09em;padding:3px 9px;border-radius:999px;
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 28%,transparent)}
+.ihead b{font-weight:500;font-size:13.5px;flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.ibody{padding:16px;display:none}
+.item.open .ibody{display:block;animation:unfold .34s var(--ease) both}
+.fld{margin-bottom:12px}
+.fld label{display:flex;justify-content:space-between;align-items:center;gap:8px;
+  font-family:var(--m);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--faint);margin-bottom:6px}
+.fld label button{font-family:var(--f);font-size:10.5px;letter-spacing:0;text-transform:none;
+  background:none;border:0;color:var(--accent);padding:0;font-weight:500}
+.sub{border-left:2px solid var(--line);padding-left:13px;margin:11px 0}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{font-size:11.5px;padding:6px 12px;border-radius:999px;border:1px solid var(--line);
+  background:var(--field);color:var(--dim);
+  transition:border-color .2s var(--ease),color .2s var(--ease),transform .14s var(--ease)}
+.chip:hover{transform:translateY(-1px);color:var(--ink)}
+.chip[aria-pressed=true]{border-color:transparent;color:var(--on-accent);
+  background:linear-gradient(100deg,var(--accent),var(--accent-2))}
+
+/* ── results ────────────────────────────────────────────────────────── */
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.out{border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden;
+  animation:rise .5s var(--ease) both;
+  transition:transform .3s var(--ease),border-color .25s var(--ease),box-shadow .35s var(--ease)}
+.out:hover{transform:translateY(-4px);border-color:color-mix(in srgb,var(--accent) 50%,var(--line));
+  box-shadow:0 20px 48px -26px color-mix(in srgb,var(--accent) 80%,transparent)}
+.out video,.out img{width:100%;display:block;background:#04060a;aspect-ratio:4/5;object-fit:contain}
+.out .cap{padding:12px 14px}
+.out .cap b{display:block;font-size:13px;font-weight:600;margin-bottom:3px}
+.out .cap span{font-size:11px;color:var(--faint);font-family:var(--m);letter-spacing:.06em}
+.out .acts{display:flex;gap:7px;padding:0 14px 13px;flex-wrap:wrap}
+.prog{height:5px;background:var(--soft);border-radius:999px;overflow:hidden;margin-top:14px;
+  position:relative}
+.prog i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(100deg,var(--accent),var(--accent-2));
+  transition:width .55s var(--ease);position:relative;overflow:hidden}
+.prog i::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(100deg,transparent,color-mix(in srgb,#fff 45%,transparent),transparent);
+  animation:sheen 1.5s linear infinite}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+  border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;
+  vertical-align:-2px;margin-right:8px}
+
+@keyframes s{to{transform:rotate(360deg)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes unfold{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes ripple{to{transform:scale(2.6);opacity:0}}
+@keyframes sheen{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+@media(prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  #scene{display:none}
+}
+.hide{display:none!important}
+footer{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--m);font-size:10.5px;color:var(--faint);line-height:1.8;letter-spacing:.04em}
+</style></head><body>
+<div class="wrap">
+  <div class="stage">
+    <canvas id="scene" aria-hidden="true"></canvas>
+    <div class="inner">
+      <div class="hdr">
+        <div>
+          <div class="eyebrow">Craftly</div>
+          <h1 id="title">Content Studio</h1>
+        </div>
+        <div class="meta" id="meta">connecting</div>
+      </div>
+    </div>
+  </div>
+  <div class="steps">
+    <span class="step on" id="s1">1 · Brief</span>
+    <span class="step" id="s2">2 · Review &amp; edit</span>
+    <span class="step" id="s3">3 · Produce</span>
+  </div>
+
+  <!-- STEP 1 -->
+  <section id="brief">
+    <div class="card" id="tplcard">
+      <span class="lab">Start from a ready week</span>
+      <div class="grid g2" id="tpls"></div>
+      <p class="note">Ready weeks are written already — pick one, change the subject,
+        and edit any wording afterwards. Nothing to wait for.</p>
+    </div>
+    <div class="card">
+      <span class="lab">Your brand</span>
+      <div class="grid g3" id="brands"></div>
+      <div class="bar" style="margin-top:10px">
+        <button class="btn sm" id="addbrand">+ Add a brand</button>
+        <button class="btn sm hide" id="editbrand">Edit this brand</button>
+        <button class="btn sm hide" id="delbrand">Remove</button>
+      </div>
+      <div class="hide" id="bform" style="margin-top:12px;border-top:1px solid var(--line);padding-top:12px">
+        <div class="row">
+          <div><span class="lab">Brand name</span><input id="f-n" placeholder="Northline Partners"></div>
+          <div><span class="lab">Second line, optional</span><input id="f-t" placeholder="Advisory"></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1 1 100%"><span class="lab">What you do, in one line</span>
+            <input id="f-what" placeholder="Feasibility studies and transaction advisory for public-sector projects"></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div><span class="lab">Who it is for</span>
+            <input id="f-who" placeholder="Government departments and investors"></div>
+          <div><span class="lab">How it should sound</span><select id="f-tone">
+            <option value="plain and direct, no decoration">Plain and direct</option>
+            <option value="warm and human">Warm and human</option>
+            <option value="bold and opinionated">Bold and opinionated</option>
+            <option value="technical and precise">Technical and precise</option>
+            <option value="formal, suitable for government clients">Formal</option>
+          </select></div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div><span class="lab">Accent colour</span><input id="f-acc" type="color" value="#2f9e63"></div>
+          <div><span class="lab">Background</span><select id="f-base">
+            <option value="#0e2340">Navy</option><option value="#1c1f24">Charcoal</option>
+            <option value="#102a21">Forest</option><option value="#241a30">Plum</option>
+            <option value="#172a3a">Slate</option><option value="#2b1d1a">Oxblood</option>
+          </select></div>
+          <div><span class="lab">Accent shape</span><select id="f-shape">
+            <option value="wedge">Angled wedge</option><option value="bar">Straight bar</option>
+          </select></div>
+        </div>
+        <div class="bar" style="margin-top:12px">
+          <button class="btn sm" id="bsave">Save brand</button>
+          <button class="btn sm" id="bcancel">Cancel</button>
+          <span class="note" id="bnote"></span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <span class="lab">What should this week do</span><div class="grid g2" id="goals"></div>
+    </div>
+    <div class="card">
+      <span class="lab">Formats</span>
+      <div class="grid g3" id="formats"></div>
+      <p class="note">Videos take most of the production time. Three or fewer keeps it quick.</p>
+    </div>
+    <div class="card">
+      <span class="lab">Where it posts</span><div class="chips" id="plats"></div>
+    </div>
+    <div class="card" id="acctcard">
+      <span class="lab">AI account</span>
+      <p class="note" id="acctnow" style="margin:0 0 10px"></p>
+      <div class="row">
+        <div style="flex:0 0 150px"><select id="acctprov">
+          <option value="">Use the studio's account</option>
+          <option value="anthropic">My Claude (API key)</option>
+          <option value="openai">My OpenAI (API key)</option>
+          <option value="groq">My Groq (free)</option>
+          <option value="xai">My xAI / Grok</option></select></div>
+        <div><input id="acctkey" type="password" placeholder="paste your API key"></div>
+        <div style="flex:0 0 auto"><button class="btn sm" id="acctsave">Save</button></div>
+      </div>
+      <p class="note">An API key comes from the provider's developer console, not from a
+        Pro or Plus subscription. With your own key, the writing bills to you.</p>
+    </div>
+    <div class="card">
+      <span class="lab">Tell it what you want</span>
+      <textarea id="subject" placeholder="Say it however you like — a topic, an instruction, a complaint."></textarea>
+      <div class="bar" style="margin-top:10px">
+        <button class="btn sm" id="assist">Ask about this first</button>
+        <span class="note" id="astatus"></span>
+      </div>
+      <div class="hide" id="ask" style="margin-top:12px;border-left:2px solid var(--accent);padding-left:13px"></div>
+      <div class="row" style="margin-top:10px">
+        <div><span class="lab">Week starting</span><input type="date" id="weekof"></div>
+        <div><span class="lab">Pieces</span><input type="number" id="count" value="7" min="1" max="14"></div>
+      </div>
+      <div class="bar">
+        <button class="btn" id="go">Create the plan</button>
+        <span class="note" id="st1"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section id="edit" class="hide">
+    <div class="card" style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+      <div><b id="ptitle">Plan</b><div class="note" id="psub"></div></div>
+      <div class="bar" style="margin:0">
+        <button class="btn sm" id="back">Back to brief</button>
+        <button class="btn" id="produce">Produce everything</button>
+      </div>
+    </div>
+    <div id="confirm" class="card hide" style="border-left:3px solid var(--warn)">
+      <span class="lab">Check before publishing</span><div id="confirmList" class="note"></div>
+    </div>
+    <div id="items"></div>
+    <div class="card">
+      <span class="lab">Audio for every video</span>
+      <div class="row">
+        <div>
+          <span class="lab">Voiceover</span>
+          <select id="vo"><option value="">None (silent)</option>
+            <option value="auto">Read the on-screen text aloud</option>
+            <option value="upload">Use a file I upload</option></select>
+        </div>
+        <div><span class="lab">Music</span><select id="music"></select></div>
+      </div>
+      <div class="bar">
+        <input type="file" id="audiofile" accept="audio/*" class="hide">
+        <button class="btn sm" id="pickaudio">Upload audio</button>
+        <span class="note" id="audioname"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section id="produce-sec" class="hide">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+        <b id="jstat">Producing…</b><span class="note mono" id="jprog"></span>
+      </div>
+      <div class="prog"><i id="jbar"></i></div>
+      <div class="bar"><button class="btn sm hide" id="again">Back to editing</button></div>
+    </div>
+    <div class="res" id="results"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+/* ──────────────────────────────────────────────────────────────────────
+   THE SCENE — real 3D, written out rather than imported.
+
+   An icosahedron and a particle shell, rotated by actual matrices and
+   projected with a perspective divide, drawn to a 2D canvas. Edges and
+   points are depth-sorted and fade with distance, which is what sells
+   depth; a flat wireframe reads as a logo.
+
+   It is hand-written for two reasons. A 3D library is 150KB before it
+   draws anything, on a page whose job is to be quick; and a library
+   loaded from a CDN is a page that breaks when the CDN is unreachable,
+   which includes every client behind a restrictive network. This has no
+   dependency, runs at 60fps on a laptop's integrated graphics, and
+   stops entirely when the tab is hidden or the viewer has asked for
+   reduced motion.
+   ────────────────────────────────────────────────────────────────── */
+(function scene3d(){
+  const cv = document.getElementById("scene");
+  if (!cv) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) { cv.style.display="none"; return; }
+  const ctx = cv.getContext("2d");
+  if (!ctx) { cv.style.display="none"; return; }
+
+  /* icosahedron: 12 vertices from three golden rectangles */
+  const t = (1 + Math.sqrt(5)) / 2;
+  const V = [];
+  for (const [a,b] of [[1,t],[-1,t],[1,-t],[-1,-t]]) {
+    V.push([0,a,b],[b,0,a],[a,b,0]);
+  }
+  const norm = v => { const l = Math.hypot(...v); return v.map(x=>x/l); };
+  const verts = V.map(norm);
+  /* edges = the 30 closest pairs, found by distance rather than typed out */
+  const E = [];
+  for (let i=0;i<verts.length;i++) for (let j=i+1;j<verts.length;j++) {
+    const d = Math.hypot(verts[i][0]-verts[j][0],verts[i][1]-verts[j][1],verts[i][2]-verts[j][2]);
+    E.push([i,j,d]);
+  }
+  E.sort((a,b)=>a[2]-b[2]);
+  const edges = E.slice(0, 30).map(e=>[e[0],e[1]]);
+
+  /* a shell of points on a Fibonacci sphere */
+  const N = 150, pts = [];
+  for (let i=0;i<N;i++){
+    const y = 1 - (i/(N-1))*2, r = Math.sqrt(Math.max(0,1-y*y));
+    const th = i * Math.PI * (3 - Math.sqrt(5));
+    pts.push([Math.cos(th)*r, y, Math.sin(th)*r]);
+  }
+
+  let W=0,H=0,dpr=1;
+  function size(){
+    const r = cv.getBoundingClientRect();
+    dpr = Math.min(2, window.devicePixelRatio||1);
+    W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
+    cv.width = W*dpr; cv.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  const ro = new ResizeObserver(size); ro.observe(cv); size();
+
+  let mx=0, my=0, tx=0, ty=0;
+  addEventListener("pointermove", e=>{
+    tx = (e.clientX/innerWidth - .5)*0.5;
+    ty = (e.clientY/innerHeight - .5)*0.35;
+  }, {passive:true});
+
+  const rotate = (p, ax, ay) => {
+    let [x,y,z] = p;
+    let c = Math.cos(ay), s = Math.sin(ay);
+    [x,z] = [x*c - z*s, x*s + z*c];
+    c = Math.cos(ax); s = Math.sin(ax);
+    [y,z] = [y*c - z*s, y*s + z*c];
+    return [x,y,z];
+  };
+  const project = (p, scale) => {
+    const d = 3.4, k = d / (d - p[2]);            // perspective divide
+    return [W*0.78 + p[0]*scale*k, H*0.52 + p[1]*scale*k, k];
+  };
+
+  const accent = getComputedStyle(document.documentElement)
+                   .getPropertyValue("--accent").trim() || "#4f8cff";
+  const accent2 = getComputedStyle(document.documentElement)
+                   .getPropertyValue("--accent-2").trim() || "#8e55ff";
+
+  let t0 = 0, raf = 0, running = true;
+  function frame(ts){
+    raf = requestAnimationFrame(frame);
+    if (!running) return;
+    const dt = Math.min(0.05, (ts - t0)/1000 || 0.016); t0 = ts;
+    mx += (tx - mx) * 0.055; my += (ty - my) * 0.055;       // eased follow
+    const ay = ts*0.00016 + mx*2.2, ax = -0.42 + my*1.6;
+    const scale = Math.min(W, H) * 0.42;
+
+    ctx.clearRect(0,0,W,H);
+
+    /* particle shell first, behind */
+    for (const p of pts){
+      const r = rotate(p, ax, ay*0.72);
+      const [x,y,k] = project([r[0]*1.5, r[1]*1.5, r[2]*1.5], scale);
+      if (x < -40 || x > W+40) continue;
+      const a = Math.max(0, Math.min(1, (k-0.62)/0.9)) * 0.42;
+      if (a <= 0.01) continue;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = r[2] > 0 ? accent2 : accent;
+      ctx.beginPath(); ctx.arc(x, y, Math.max(0.5, 1.5*k), 0, 6.283); ctx.fill();
+    }
+
+    /* the solid, depth-sorted so near edges draw over far ones */
+    const R = verts.map(v => rotate(v, ax, ay));
+    const drawn = edges.map(([i,j]) => {
+      const z = (R[i][2] + R[j][2]) / 2;
+      return {i, j, z};
+    }).sort((a,b) => a.z - b.z);
+
+    for (const e of drawn){
+      const A = project(R[e.i], scale), B = project(R[e.j], scale);
+      const depth = Math.max(0, Math.min(1, (e.z + 1) / 2));
+      ctx.globalAlpha = 0.10 + depth * 0.5;
+      ctx.lineWidth = 0.6 + depth * 1.3;
+      ctx.strokeStyle = depth > 0.55 ? accent2 : accent;
+      ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
+    }
+    for (const r of R){
+      const [x,y,k] = project(r, scale);
+      const depth = Math.max(0, Math.min(1, (r[2]+1)/2));
+      ctx.globalAlpha = 0.25 + depth * 0.7;
+      ctx.fillStyle = "#dfe8f7";
+      ctx.beginPath(); ctx.arc(x, y, 1.1 + depth*2.1, 0, 6.283); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  document.addEventListener("visibilitychange", ()=>{ running = !document.hidden; });
+  raf = requestAnimationFrame(frame);
+})();
+
+/* a press you can feel: the ripple starts where the pointer landed */
+document.addEventListener("pointerdown", e => {
+  const b = e.target.closest(".btn");
+  if (!b || b.disabled) return;
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = b.getBoundingClientRect(), d = Math.max(r.width, r.height);
+  const s = document.createElement("span");
+  s.className = "ripple";
+  s.style.cssText = `width:${d}px;height:${d}px;left:${e.clientX-r.left-d/2}px;top:${e.clientY-r.top-d/2}px`;
+  b.appendChild(s);
+  setTimeout(()=>s.remove(), 600);
+});
+
+/* the glow under the cursor on a choice follows the pointer */
+document.addEventListener("pointermove", e => {
+  const o = e.target.closest(".opt");
+  if (!o) return;
+  const r = o.getBoundingClientRect();
+  o.style.setProperty("--mx", (e.clientX - r.left) + "px");
+  o.style.setProperty("--my", (e.clientY - r.top) + "px");
+}, {passive:true});
+</script>
+
+<script>
+const Q=new URLSearchParams(location.search), T=Q.get("t")||localStorage.getItem("ct")||"";
+if(T) try{localStorage.setItem("ct",T)}catch{}
+const $=i=>document.getElementById(i);
+const api=async(p,body,method)=>{
+  const r=await fetch(p+(p.includes("?")?"&":"?")+"t="+encodeURIComponent(T),{
+    method:method||(body?"POST":"GET"),
+    headers:Object.assign({"X-Craftly-Token":T},body?{"Content-Type":"application/json"}:{}),
+    body:body?JSON.stringify(body):undefined});
+  const j=await r.json().catch(()=>({error:"bad response"}));
+  if(!r.ok) throw new Error(j.error||("error "+r.status));
+  return j;
+};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const GOALS={visibility:["Visibility","Be seen. Broad, opinionated, shareable."],
+ authority:["Authority","Be believed. Findings and depth."],
+ leads:["Leads","Start conversations."],
+ recruitment:["Recruitment","Attract people."]};
+const TYPEDESC={explainer:"Explainer video",carousel:"Carousel (PDF)",text_post:"Text post",
+ quote_card:"Quote card",stat_card:"Stat card",mcq:"Quiz video",quiz:"Quiz video",
+ faceless:"Faceless video",presenter:"Presenter video",slideshow:"Slideshow",
+ presentation:"Presentation deck",longform:"Long-form video"};
+const S={cfg:null,brand:null,goal:"visibility",formats:new Set(["explainer","carousel","text_post","quote_card"]),
+ plats:new Set(["linkedin"]),plan:null,job:null,audio:null};
+
+function optBtn(k,t,s,on){return `<button class="opt" data-k="${k}" aria-pressed="${on}">
+  <span class="mk"></span><span><b>${esc(t)}</b>${s?`<span>${esc(s)}</span>`:""}</span></button>`}
+
+async function boot(){
+  let cfg;
+  try{cfg=await api("/api/config")}catch(e){$("meta").textContent="offline";return}
+  S.cfg=cfg;
+  if(!cfg.ok){$("meta").innerHTML='<span class="err">no access token</span>';
+    $("brief").innerHTML='<div class="card"><b>This studio needs an access link.</b>'+
+      '<p class="note">Ask your account manager for the link with your token.</p></div>';return}
+  await loadBrands();
+  $("meta").innerHTML=esc(cfg.client)+(cfg.ai_account==="client"
+    ? "<br>your own AI account" : "<br>$"+cfg.spend.toFixed(2)+" of $"+cfg.cap.toFixed(2)+" this month");
+  $("acctnow").innerHTML = cfg.ai_account==="client"
+    ? '<span style="color:var(--accent)">Using your own '+esc(cfg.ai_provider)+' account.</span> Nothing is billed to the studio.'
+    : "Currently using the studio's account, within your monthly allowance.";
+  $("foot").textContent="Produced on the studio's own infrastructure. "+
+    (cfg.tts?"Voiceover available.":"Voiceover not configured.");
+  $("goals").innerHTML=Object.entries(GOALS).map(([k,v])=>optBtn(k,v[0],v[1],k===S.goal)).join("");
+  $("formats").innerHTML=cfg.types.filter(t=>t!=="quiz").map(t=>
+    optBtn(t,TYPEDESC[t]||t,"",S.formats.has(t))).join("");
+  $("plats").innerHTML=cfg.platforms.map(p=>
+    `<button class="chip" data-k="${p}" aria-pressed="${S.plats.has(p)}">${esc(p.replace(/_/g," "))}</button>`).join("");
+  $("music").innerHTML='<option value="">No music</option>'+
+    cfg.music.map(m=>`<option value="${esc(m)}">${esc(m)}</option>`).join("");
+  try{
+    const t=await api("/api/templates");
+    $("tpls").innerHTML=(t.templates||[]).map(x=>
+      `<button class="opt" data-tpl="${x.id}"><span class="mk"></span><span>
+        <b>${esc(x.name)}</b><span>${esc(x.blurb)}</span></span></button>`).join("")
+      ||'<p class="note">No ready weeks installed.</p>';
+  }catch{}
+  if(!cfg.planner) $("st1").innerHTML='<span class="err">Planner not configured on the server.</span>';
+  const d=new Date();d.setDate(d.getDate()+((8-d.getDay())%7||7));
+  $("weekof").value=d.toISOString().slice(0,10);
+  tint();
+}
+/* ---------- the client's own brands ---------- */
+S.brands=[];S.answers=[];
+function curBrand(){return S.brands.find(b=>b.id===S.brand)||null}
+function tint(){const a=curBrand()?.acc;if(a)document.documentElement.style.setProperty("--accent",a)}
+function paintBrands(){
+  if(!S.brands.length){
+    $("brands").innerHTML='<p class="note" style="grid-column:1/-1">'+
+      'Add your brand to begin. One minute, and only once.</p>';
+    $("editbrand").classList.add("hide");$("delbrand").classList.add("hide");
+  }else{
+    if(!curBrand())S.brand=S.brands[0].id;
+    $("brands").innerHTML=S.brands.map(b=>
+      optBtn(String(b.id),b.name,b.what||b.tagline||"",b.id===S.brand)).join("");
+    $("editbrand").classList.remove("hide");$("delbrand").classList.remove("hide");
+  }
+  $("go").disabled=!S.brands.length;
+  tint();
+}
+async function loadBrands(){
+  try{const r=await api("/api/brands");S.brands=r.brands||[]}catch{S.brands=[]}
+  paintBrands();
+}
+function showBform(b){
+  $("bform").dataset.id=b?b.id:"";
+  $("f-n").value=b?b.name||"":"";$("f-t").value=b?b.tagline||"":"";
+  $("f-what").value=b?b.what||"":"";$("f-who").value=b?b.who||"":"";
+  if(b&&b.tone)$("f-tone").value=b.tone;
+  $("f-acc").value=b?b.acc||"#2f9e63":"#2f9e63";
+  $("f-base").value=b?b.base||"#0e2340":"#0e2340";
+  $("f-shape").value=b?b.shape||"wedge":"wedge";
+  $("bnote").textContent="";$("bform").classList.remove("hide");$("f-n").focus();
+}
+$("addbrand").onclick=()=>showBform(null);
+$("editbrand").onclick=()=>showBform(curBrand());
+$("bcancel").onclick=()=>$("bform").classList.add("hide");
+$("bsave").onclick=async()=>{
+  const name=$("f-n").value.trim();
+  if(!name){$("bnote").innerHTML='<span class="err">A name is needed.</span>';return}
+  $("bsave").disabled=true;
+  try{
+    const r=await api("/api/brand-save",{id:$("bform").dataset.id||null,name,
+      tagline:$("f-t").value.trim(),what:$("f-what").value.trim(),
+      who:$("f-who").value.trim(),tone:$("f-tone").value,
+      acc:$("f-acc").value,base:$("f-base").value,shape:$("f-shape").value});
+    S.brands=r.brands||[];S.brand=r.id;$("bform").classList.add("hide");paintBrands();
+  }catch(e){$("bnote").innerHTML='<span class="err">'+esc(e.message)+"</span>"}
+  $("bsave").disabled=false;
+};
+$("delbrand").onclick=async()=>{
+  if(!curBrand())return;
+  try{const r=await api("/api/brand-delete",{id:S.brand});
+    S.brands=r.brands||[];S.brand=S.brands[0]?.id||null;paintBrands()}catch{}
+};
+
+/* ---------- it asks back before it writes ---------- */
+$("assist").onclick=async()=>{
+  const want=$("subject").value.trim();
+  if(!want){$("astatus").innerHTML='<span class="err">Write a line first, however rough.</span>';return}
+  $("assist").disabled=true;$("astatus").innerHTML='<span class="spin"></span>Reading it…';
+  try{
+    const r=await api("/api/assist",{brand:S.brand,goal:S.goal,subject:want});
+    if(r.offline){$("astatus").innerHTML=
+      "No AI account is configured, so suggestions are off. The ready weeks above still work.";}
+    else{showAsk(r);$("astatus").textContent=""}
+  }catch(e){$("astatus").innerHTML='<span class="err">'+esc(e.message)+"</span>"}
+  $("assist").disabled=false;
+};
+function showAsk(r){
+  S.answers=[];
+  const qs=(r.questions||[]).slice(0,3),ang=(r.angles||[]).slice(0,3),box=$("ask");
+  box.classList.remove("hide");
+  box.innerHTML=(r.sharpened?`<p class="note" style="margin:0 0 6px"><b>Understood as:</b> ${esc(r.sharpened)}</p>`:"")
+    +qs.map((q,i)=>`<p style="font-weight:600;font-size:13.5px;margin:12px 0 7px">${esc(q.q)}</p>
+      <div class="chips" data-i="${i}">${(q.options||[]).slice(0,4).map(o=>
+        `<button class="chip" data-o="${esc(o)}">${esc(o)}</button>`).join("")}</div>
+      <input data-free="${i}" placeholder="or type your own answer" style="margin-top:7px">`).join("")
+    +(ang.length?'<p style="font-weight:600;font-size:13.5px;margin:14px 0 7px">Angles it suggests — tap one to use it</p>'
+      +ang.map(a=>`<button class="opt" data-ang="${esc(a.title)}" style="margin-top:7px">
+        <span class="mk"></span><span><b>${esc(a.title)}</b><span>${esc(a.why||"")}</span></span></button>`).join(""):"");
+  qs.forEach((q,i)=>S.answers[i]={q:q.q,a:""});
+  box.querySelectorAll(".chips .chip").forEach(bt=>bt.onclick=()=>{
+    const i=+bt.parentElement.dataset.i;
+    bt.parentElement.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed","false"));
+    bt.setAttribute("aria-pressed","true");S.answers[i].a=bt.dataset.o;
+    box.querySelector(`[data-free="${i}"]`).value="";
+  });
+  box.querySelectorAll("[data-free]").forEach(inp=>inp.oninput=()=>{
+    S.answers[+inp.dataset.free].a=inp.value;});
+  box.querySelectorAll("[data-ang]").forEach(bt=>bt.onclick=()=>{
+    $("subject").value=bt.dataset.ang;
+    box.querySelectorAll("[data-ang]").forEach(x=>x.setAttribute("aria-pressed","false"));
+    bt.setAttribute("aria-pressed","true");});
+}
+
+document.addEventListener("click",async e=>{
+  const tb=e.target.closest("[data-tpl]");
+  if(tb){
+    const subj=$("subject").value.trim();
+    if(!S.brands.length){
+      $("st1").innerHTML='<span class="err">Add your brand first.</span>';return}
+    if(!subj){$("subject").focus();
+      $("st1").innerHTML='<span class="err">Add a subject first — it goes into the words.</span>';return}
+    tb.disabled=true;$("st1").innerHTML='<span class="spin"></span>Preparing…';
+    try{
+      const r=await api("/api/template",{template:tb.dataset.tpl,brand:S.brand,
+        subject:subj,week_of:$("weekof").value});
+      S.plan=r.plan;renderPlan();step(2);$("st1").textContent="";
+    }catch(err){$("st1").innerHTML='<span class="err">'+esc(err.message)+"</span>"}
+    tb.disabled=false;return;
+  }
+  const b=e.target.closest(".opt,.chip"); if(!b||!b.dataset.k) return;
+  const k=b.dataset.k,p=b.parentElement.id;
+  if(p==="brands"){S.brand=Number(k);paintBrands();return}
+  else if(p==="goals"){S.goal=k}
+  else{const s=p==="formats"?S.formats:S.plats; s.has(k)?s.delete(k):s.add(k); if(!s.size)s.add(k)}
+  [...b.parentElement.children].forEach(c=>{
+    const on=(p==="goals")?c.dataset.k===S.goal:
+      (p==="formats"?S.formats:S.plats).has(c.dataset.k);
+    c.setAttribute("aria-pressed",on)});
+});
+
+function step(n){["s1","s2","s3"].forEach((s,i)=>$(s).classList.toggle("on",i===n-1));
+  $("brief").classList.toggle("hide",n!==1);
+  $("edit").classList.toggle("hide",n!==2);
+  $("produce-sec").classList.toggle("hide",n!==3);
+  scrollTo({top:0,behavior:"smooth"});}
+
+$("acctsave").onclick=async()=>{
+  $("acctsave").disabled=true;
+  try{
+    await api("/api/myaccount",{provider:$("acctprov").value,key:$("acctkey").value});
+    $("acctkey").value=""; const c=await api("/api/config");
+    $("acctnow").innerHTML = c.ai_account==="client"
+      ? '<span style="color:var(--accent)">Saved. Using your own '+esc(c.ai_provider)+' account.</span>'
+      : "Saved. Using the studio's account.";
+  }catch(e){$("acctnow").innerHTML='<span class="err">'+esc(e.message)+"</span>"}
+  $("acctsave").disabled=false;
+};
+$("go").onclick=async()=>{
+  $("go").disabled=true;$("st1").innerHTML='<span class="spin"></span>Writing the plan…';
+  try{
+    const r=await api("/api/plan",{brand:S.brand,goal:S.goal,week_of:$("weekof").value,
+      formats:[...S.formats],platforms:[...S.plats],subject:$("subject").value.trim(),
+      answers:S.answers.filter(a=>a&&a.a),count:Number($("count").value)||7});
+    S.plan=r.plan;renderPlan();step(2);$("st1").textContent="";
+  }catch(e){$("st1").innerHTML='<span class="err">'+esc(e.message)+"</span>"}
+  $("go").disabled=false;
+};
+$("back").onclick=()=>step(1);
+
+/* ---------- plan editor: every edit here is free ---------- */
+const TEXTFIELDS=["title","kicker","caption","text","body","head","line","cta","attrib",
+  "label","value","note","q","why","pull","board_title"];
+function fieldsOf(obj,path,out){
+  for(const [k,v] of Object.entries(obj||{})){
+    const p=path?path+"."+k:k;
+    if(typeof v==="string"&&TEXTFIELDS.includes(k)) out.push([p,k,v]);
+    else if(Array.isArray(v)){
+      v.forEach((x,i)=>{ if(typeof x==="string") out.push([p+"."+i,k+" "+(i+1),x]);
+        else if(x&&typeof x==="object") fieldsOf(x,p+"."+i,out)});
+    } else if(v&&typeof v==="object") fieldsOf(v,p,out);
+  }
+  return out;
+}
+function renderPlan(){
+  const p=S.plan,items=p.items||[];
+  $("ptitle").textContent=(curBrand()?.name||"Plan")+" — "+(p.week_of||"");
+  $("psub").textContent=items.length+" pieces. Edit anything below; changes cost nothing.";
+  const conf=p._confirm||[];
+  $("confirm").classList.toggle("hide",!conf.length);
+  $("confirmList").innerHTML=conf.map(c=>"• "+esc(c)).join("<br>");
+  $("items").innerHTML=items.map((it,i)=>{
+    const flds=fieldsOf(it,"",[]).filter(([p])=>!p.startsWith("hashtags"));
+    return `<div class="item" data-i="${i}">
+      <div class="ihead"><i>${esc(it.day||i+1)}</i><em>${esc(TYPEDESC[it.type]||it.type||"")}</em>
+        <b>${esc(it.title||it.text||(it.body||"").split("\n")[0]||it.caption||"Untitled")}</b>
+        <span class="note mono">edit</span></div>
+      <div class="ibody">
+        ${flds.map(([path,name,val])=>`<div class="fld">
+          <label>${esc(name)}<button data-rw="items.${i}.${path}">rewrite</button></label>
+          ${val.length>90?`<textarea data-p="items.${i}.${path}">${esc(val)}</textarea>`
+            :`<input data-p="items.${i}.${path}" value="${esc(val)}">`}
+        </div>`).join("")}
+        <div class="bar"><button class="btn sm" data-del="${i}">Remove this piece</button></div>
+      </div></div>`;}).join("");
+}
+$("items").addEventListener("click",async e=>{
+  const h=e.target.closest(".ihead");
+  if(h&&!e.target.dataset.rw){h.parentElement.classList.toggle("open");return}
+  const rw=e.target.dataset.rw;
+  if(rw){
+    const inp=document.querySelector(`[data-p="${rw}"]`); if(!inp)return;
+    const instr=prompt("How should this change?","make it sharper and shorter");
+    if(!instr)return;
+    e.target.textContent="…";
+    try{const r=await api("/api/rewrite",{text:inp.value,instruction:instr});
+      inp.value=r.text;setAt(rw,r.text);e.target.textContent="rewrite";
+    }catch(err){e.target.textContent="failed"}
+    return;
+  }
+  const del=e.target.dataset.del;
+  if(del!==undefined){S.plan.items.splice(Number(del),1);renderPlan()}
+});
+$("items").addEventListener("input",e=>{
+  const p=e.target.dataset.p; if(p) setAt(p,e.target.value);
+});
+function setAt(path,val){
+  const parts=path.split(".");let n=S.plan;
+  for(const k of parts.slice(0,-1)) n=Array.isArray(n)?n[+k]:n[k];
+  const last=parts.at(-1); if(Array.isArray(n)) n[+last]=val; else n[last]=val;
+}
+$("pickaudio").onclick=()=>$("audiofile").click();
+$("audiofile").onchange=async()=>{
+  const f=$("audiofile").files[0]; if(!f)return;
+  $("audioname").innerHTML='<span class="spin"></span>uploading';
+  try{
+    const r=await fetch("/api/upload?t="+encodeURIComponent(T),{method:"POST",
+      headers:{"X-Craftly-Token":T,"X-Filename":f.name},body:f});
+    const j=await r.json(); S.audio=j.path; $("audioname").textContent=j.name+" ready";
+  }catch{$("audioname").innerHTML='<span class="err">upload failed</span>'}
+};
+
+/* ---------- produce ---------- */
+$("produce").onclick=async()=>{
+  const vo=$("vo").value,mus=$("music").value;
+  (S.plan.items||[]).forEach(it=>{
+    if(["explainer","faceless","mcq","quiz","presenter","slideshow","presentation","longform"].includes(it.type)){
+      if(vo==="auto") it.narrate="auto"; else delete it.narrate;
+      const a={};
+      if(vo==="upload"&&S.audio) a.voiceover=S.audio;
+      if(mus) a.music="./craftly-data/music/"+mus;
+      if(Object.keys(a).length) it.audio=a; else delete it.audio;
+    }});
+  step(3);$("jstat").textContent="Producing…";$("jbar").style.width="4%";
+  try{const r=await api("/api/render",{plan:S.plan});S.job=r.job;poll()}
+  catch(e){$("jstat").innerHTML='<span class="err">'+esc(e.message)+"</span>"}
+};
+async function poll(){
+  try{
+    const j=await api("/api/job?id="+S.job);
+    $("jprog").textContent=j.progress||"";
+    const m=(j.progress||"").match(/(\d+)\s*\/\s*(\d+)/);
+    if(m)$("jbar").style.width=Math.max(4,(+m[1]/+m[2])*100)+"%";
+    if(j.status==="done"){$("jstat").textContent="Ready";$("jbar").style.width="100%";
+      $("again").classList.remove("hide");show(j.result);return}
+    if(j.status==="failed"){$("jstat").innerHTML='<span class="err">'+esc(j.error||"failed")+"</span>";
+      $("again").classList.remove("hide");return}
+  }catch(e){}
+  setTimeout(poll,1500);
+}
+$("again").onclick=()=>step(2);
+function fileURL(p){const i=p.indexOf("/output/");return "/files/"+(i>=0?p.slice(i+8):p)}
+function show(res){
+  $("results").innerHTML=(res||[]).map(r=>{
+    if(r.error) return `<div class="out"><div class="cap"><b>${esc(r.day||"")} ${esc(r.type||"")}</b>
+      <span class="err">${esc(r.error)}</span></div></div>`;
+    const files=r.files||{};
+    let media="",links=[];
+    const vid=files.video||Object.values(files).find(v=>typeof v==="string"&&v.endsWith(".mp4"));
+    const pdf=files.pdf||(files.slides&&files.pdf);
+    const firstJpg=(files.slides||[]).find?.(x=>x.endsWith(".jpg"))||
+      Object.values(files).find(v=>typeof v==="string"&&v.endsWith(".jpg"));
+    if(vid){media=`<video src="${fileURL(vid)}" controls preload="metadata"></video>`;
+      links.push([fileURL(vid),"Download video"])}
+    else if(firstJpg){media=`<img src="${fileURL(firstJpg)}" alt="">`;
+      links.push([fileURL(firstJpg),"Download image"])}
+    for(const [k,v] of Object.entries(files)){
+      if(typeof v==="object"&&v&&v.pdf) links.push([fileURL(v.pdf),"Download PDF"]);
+      if(typeof v==="string"&&v.endsWith(".pdf")) links.push([fileURL(v),"Download PDF"]);
+    }
+    if(r.type==="text_post") media=`<div class="cap" style="font-size:13px;white-space:pre-wrap">${esc(files.text||"")}</div>`;
+    return `<div class="out">${media}<div class="cap"><b>${esc(r.day||"")} · ${esc(TYPEDESC[r.type]||r.type)}</b>
+      <span>${r.duration?r.duration+"s":""} ${esc((r.platforms||[]).join(" · "))}</span></div>
+      <div class="acts">${links.map(([h,t])=>`<a class="btn sm" href="${h}" download>${t}</a>`).join("")}</div></div>`;
+  }).join("");
+}
+boot();
+</script><script src="offline.js"></script><script src="nav.js"></script></body></html>

@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Short form</title>
+<style>
+:root{--bg:#070a0f;--panel:#0d1219;--line:#1c2430;--ink:#eef2f7;--dim:#8794a6;
+      --acc:#3ddc97;--warn:#e0a94b;--fail:#e4635a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+     font:15px/1.6 Inter,ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;
+     -webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:30px 18px 90px}
+h1{font-size:26px;margin:0 0 4px;letter-spacing:-.015em}
+.sub{color:var(--dim);margin:0 0 24px;max-width:68ch}
+.cols{display:grid;gap:18px;grid-template-columns:1fr 420px}
+@media(max-width:980px){.cols{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.lab{display:block;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+     color:var(--dim);margin:15px 0 7px;font-weight:600}
+.lab:first-child{margin-top:0}
+input,select,textarea{width:100%;background:#0a0f16;color:var(--ink);
+  border:1px solid var(--line);border-radius:10px;padding:11px 13px;font:inherit}
+textarea{min-height:120px;resize:vertical;line-height:1.55}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--acc)}
+.row{display:flex;gap:9px}.row>*{flex:1}
+.btn{width:100%;margin-top:16px;padding:12px;border-radius:11px;border:0;
+  background:var(--acc);color:#04140b;font:600 15px/1 Inter,sans-serif;cursor:pointer}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.note{color:var(--dim);font-size:13px;margin:10px 0 0}
+.warn{color:var(--warn)}.ok{color:var(--acc)}.bad{color:var(--fail)}
+.kinds{display:grid;gap:9px;grid-template-columns:repeat(auto-fit,minmax(176px,1fr))}
+.k{text-align:left;background:#0a0f16;border:1px solid var(--line);border-radius:13px;
+   padding:13px 14px;cursor:pointer;color:var(--ink);font:inherit}
+.k b{display:block;font-size:14.5px;margin-bottom:3px}
+.k span{color:var(--dim);font-size:12.5px;line-height:1.45}
+.k[aria-pressed=true]{border-color:var(--acc);background:#0c1b17}
+.k[aria-pressed=true] b{color:var(--acc)}
+.sizes{display:flex;flex-wrap:wrap;gap:7px}
+.sz{flex:0 0 auto;padding:7px 12px;border:1px solid var(--line);border-radius:999px;
+    font-size:12.5px;cursor:pointer;background:none;color:var(--dim);font-family:inherit}
+.sz[aria-pressed=true]{border-color:var(--acc);color:var(--acc)}
+.sz i{font-style:normal;opacity:.55;margin-left:5px}
+video{width:100%;border-radius:12px;background:#000;margin-top:14px;display:block}
+.spin{display:inline-block;width:11px;height:11px;margin-right:7px;border-radius:50%;
+  border:2px solid #2b3643;border-top-color:var(--acc);animation:s .7s linear infinite;
+  vertical-align:-1px}
+@keyframes s{to{transform:rotate(360deg)}}
+.dl{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.dl a{padding:9px 14px;border:1px solid var(--line);border-radius:10px;
+  color:var(--ink);text-decoration:none;font-size:13.5px}
+.dl a:hover{border-color:var(--acc)}
+</style></head><body><div class="wrap">
+
+<h1>Short form</h1>
+<p class="sub">Seven kinds of short video, each laid out inside the platform's own
+safe area — so a caption rail or a username never lands on your type. Rendered on
+the studio, not in this browser, so length is not limited by the tab.</p>
+
+<div class="cols">
+  <div class="panel">
+    <span class="lab">What kind</span>
+    <div class="kinds" id="kinds"></div>
+    <div id="fields"></div>
+  </div>
+
+  <div>
+    <div class="panel">
+      <span class="lab">Size</span>
+      <div class="sizes" id="sizes"></div>
+      <span class="lab">Brand</span>
+      <div class="row">
+        <input id="brand" value="iCore" placeholder="wordmark">
+        <input id="lead" type="color" value="#2f9e63">
+        <input id="deep" type="color" value="#0e2340">
+      </div>
+      <span class="lab">Music bed</span>
+      <select id="mood">
+        <option value="">None</option>
+        <option value="corporate">Corporate</option>
+        <option value="uplifting">Uplifting</option>
+        <option value="calm">Calm</option>
+        <option value="serious">Serious</option>
+        <option value="driving">Driving</option>
+      </select>
+      <p class="note" style="margin-top:8px">Generated here, not licensed —
+        nothing to attribute.</p>
+      <button class="btn" id="go">Render it</button>
+      <p class="note" id="msg"></p>
+      <div id="out"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const T = () => { const t = new URLSearchParams(location.search).get("t");
+                  return t ? "?t=" + encodeURIComponent(t) : ""; };
+const esc = t => (t||"").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+let KIND = "kinetic", PRESET = "reel", KINDS = {}, SIZES = {};
+
+/* Each kind asks only for what it needs. A form that shows every field
+   for every kind is how a tool teaches people to ignore its fields. */
+const FIELDS = {
+  kinetic: `<span class="lab">One phrase per line — each gets its own beat</span>
+    <textarea id="lines">Pricing a retainer
+is a decision about risk,
+not about hours.</textarea>
+    <span class="lab">Seconds per phrase</span><input id="per" type="number" value="1.5" step="0.1" min="0.6">`,
+  countdown: `<span class="lab">Title</span><input id="title" value="Three things to settle first">
+    <span class="lab">Items — one per line</span>
+    <textarea id="lines">Secure a long-term offtake
+Site within 40km of the deposits
+Negotiate an industrial power tariff</textarea>
+    <label class="note" style="display:flex;gap:7px;align-items:center;margin-top:10px">
+      <input type="checkbox" id="reverse" checked style="width:auto"> count down, not up</label>`,
+  sting: `<span class="lab">Name</span><input id="name" value="iCore">
+    <span class="lab">Tagline</span><input id="tagline" value="Business Solutions">
+    <span class="lab">Mark</span>
+    <select id="family"><option>monogram</option><option>interlock</option>
+      <option>orbit</option><option>aperture</option><option>prism</option>
+      <option>bloom</option><option>network</option><option>flow</option>
+      <option>pillars</option></select>
+    <span class="lab">Seconds</span><input id="seconds" type="number" value="3" step="0.5" min="1.5">`,
+  timeline: `<span class="lab">Title</span><input id="title" value="Implementation">
+    <span class="lab">When and what — "2026 Q1 | Detailed design"</span>
+    <textarea id="lines">2026 Q1 | Detailed design
+2026 Q2 | Financial close
+2027 Q3 | Commissioning</textarea>`,
+  statdrop: `<span class="lab">The number</span>
+    <div class="row"><input id="value" value="17.4"><input id="unit" value="%" placeholder="unit"></div>
+    <span class="lab">What it is</span><input id="label" value="Internal rate of return">
+    <span class="lab">Context (optional)</span>
+    <textarea id="context" style="min-height:70px">Over ten years, at a chromite feed price below PKR 42,000 per tonne</textarea>
+    <span class="lab">Seconds</span><input id="seconds" type="number" value="4" step="0.5" min="2">`,
+  testimonial: `<span class="lab">The quotation</span>
+    <textarea id="quote">They turned a 70-page study into a board pack in a morning.</textarea>
+    <span class="lab">Who said it</span><input id="who" value="Head of Investment">
+    <span class="lab">Their role</span><input id="role" value="Provincial investment board">
+    <span class="lab">Seconds</span><input id="seconds" type="number" value="6" step="0.5" min="3">`,
+  compare: `<p class="note" style="margin-top:0">Two pictures already in this
+    workspace's output — paste the paths the studio gave you, like
+    <code>/files/posts/before.png</code>.</p>
+    <span class="lab">Before</span><input id="before" placeholder="/files/…">
+    <span class="lab">After</span><input id="after" placeholder="/files/…">
+    <div class="row" style="margin-top:10px">
+      <input id="label_a" value="Before"><input id="label_b" value="After"></div>`,
+};
+
+function paintKinds(){
+  $("kinds").innerHTML = Object.entries(KINDS).map(([k,why])=>
+    `<button class="k" data-k="${k}" aria-pressed="${k===KIND}">
+      <b>${k[0].toUpperCase()+k.slice(1)}</b><span>${esc(why)}</span></button>`).join("");
+  $("fields").innerHTML = FIELDS[KIND] || "";
+}
+function paintSizes(){
+  const order = ["reel","tiktok","short","story","feed_portrait","feed_square",
+                 "landscape","youtube","linkedin_portrait","x_landscape","pinterest","cinema"];
+  $("sizes").innerHTML = order.filter(k=>SIZES[k]).map(k=>
+    `<button class="sz" data-s="${k}" aria-pressed="${k===PRESET}">
+      ${k.replace(/_/g," ")}<i>${SIZES[k].ratio}</i></button>`).join("");
+}
+$("kinds").onclick = e => { const b=e.target.closest(".k"); if(!b) return;
+  KIND=b.dataset.k; paintKinds(); };
+$("sizes").onclick = e => { const b=e.target.closest(".sz"); if(!b) return;
+  PRESET=b.dataset.s; paintSizes(); };
+
+function val(id, d){ const e=$(id); return e ? e.value.trim() : (d===undefined?"":d); }
+function lines(id){ const e=$(id); return e ? e.value.split("\n").map(x=>x.trim()).filter(Boolean) : []; }
+
+function payload(){
+  const p = {kind:KIND, preset:PRESET, brand:val("brand","iCore"),
+             lead:val("lead","#2f9e63"), deep:val("deep","#0e2340")};
+  if ($("mood") && $("mood").value) p.mood = $("mood").value;
+  if (KIND==="kinetic"){ p.lines = lines("lines"); p.per = +val("per",1.5); }
+  if (KIND==="countdown"){ p.title = val("title"); p.lines = lines("lines");
+                           p.reverse = $("reverse") ? $("reverse").checked : true; }
+  if (KIND==="sting"){ p.name = val("name"); p.tagline = val("tagline");
+                       p.family = val("family"); p.seconds = +val("seconds",3); }
+  if (KIND==="timeline"){ p.title = val("title");
+    p.stops = lines("lines").map(l=>{ const i=l.indexOf("|");
+      return i<0 ? [l,""] : [l.slice(0,i).trim(), l.slice(i+1).trim()]; }); }
+  if (KIND==="statdrop"){ p.value=val("value"); p.unit=val("unit");
+    p.label=val("label"); p.context=val("context"); p.seconds=+val("seconds",4); }
+  if (KIND==="testimonial"){ p.quote=val("quote"); p.who=val("who");
+    p.role=val("role"); p.seconds=+val("seconds",6); }
+  if (KIND==="compare"){ p.before=val("before"); p.after=val("after");
+    p.label_a=val("label_a"); p.label_b=val("label_b"); p.seconds=6; }
+  return p;
+}
+
+$("go").onclick = async ()=>{
+  $("go").disabled = true;
+  $("msg").innerHTML = '<span class="spin"></span>Rendering on the studio…';
+  $("out").innerHTML = "";
+  try{
+    const r = await fetch("/api/reel"+T(), {method:"POST",
+      headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload())});
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || ("error "+r.status));
+    const pr = j.probe || {};
+    $("out").innerHTML = '<video controls src="'+j.file+'"></video>' +
+      '<div class="dl"><a href="'+j.file+'" download>Download MP4</a></div>' +
+      '<p class="note">'+pr.width+'×'+pr.height+' · '+j.ratio+' · '+
+      (pr.duration?(+pr.duration).toFixed(1)+'s':'')+' · '+
+      (j.bytes/1048576).toFixed(1)+' MB</p>';
+    $("msg").innerHTML = '<span class="ok">Done.</span>';
+  }catch(e){ $("msg").innerHTML = '<span class="bad">'+esc(e.message)+'</span>'; }
+  $("go").disabled = false;
+};
+
+(async ()=>{
+  try{
+    const r = await fetch("/api/reel/kinds"+T(), {method:"POST",
+      headers:{"Content-Type":"application/json"}, body:"{}"});
+    const j = await r.json();
+    KINDS = j.kinds || {}; SIZES = j.sizes || {};
+  }catch(e){ KINDS = {kinetic:"One phrase at a time"}; SIZES = {reel:{ratio:"9:16"}}; }
+  paintKinds(); paintSizes();
+})();
+</script></div><script src="offline.js"></script><script src="nav.js"></script></body></html>

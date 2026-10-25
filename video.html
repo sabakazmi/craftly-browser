@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Video Studio</title>
+<style>
+:root{--bg:#07090d;--panel:#0d1117;--panel2:#11171f;--line:#1c232e;--ink:#eef2f7;
+  --dim:#8b97a8;--faint:#5a6578;--accent:#4f8cff;--accent2:#8e55ff;--ok:#46d6a0;
+  --warn:#f0a35e;--ease:cubic-bezier(.2,.7,.2,1);
+  --f:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f);
+  -webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(860px 580px at 86% -10%,color-mix(in srgb,var(--accent2) 14%,transparent),transparent 70%),
+             radial-gradient(700px 480px at 2% 12%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 72%)}
+.wrap{position:relative;max-width:1320px;margin:0 auto;padding:26px 20px 70px}
+h1{margin:0;font-size:clamp(21px,3vw,31px);font-weight:600;letter-spacing:-.032em}
+.eyebrow{font-family:var(--m);font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:7px}
+.lay{display:grid;grid-template-columns:minmax(0,1fr) 370px;gap:22px;margin-top:24px;align-items:start}
+@media(max-width:980px){.lay{grid-template-columns:minmax(0,1fr)}}
+.stage{position:relative;border:1px solid var(--line);border-radius:18px;overflow:hidden;
+  background:#04060a;aspect-ratio:4/5}
+#c{display:block;width:100%;height:100%}
+.hud{position:absolute;left:12px;bottom:12px;display:flex;gap:8px;align-items:center;
+  font-family:var(--m);font-size:10.5px;color:var(--dim);background:color-mix(in srgb,#000 55%,transparent);
+  backdrop-filter:blur(8px);padding:6px 12px;border-radius:999px;border:1px solid var(--line)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+.dot.rec{background:#ff4d5e;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+.scrub{display:flex;align-items:center;gap:10px;margin-top:12px}
+.scrub input[type=range]{flex:1;accent-color:var(--accent)}
+.panel{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:16px;padding:18px}
+.lab{display:block;font-family:var(--m);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin:16px 0 7px}
+.lab:first-child{margin-top:0}
+input,select,textarea{width:100%;background:#0f141b;color:var(--ink);border:1px solid var(--line);
+  border-radius:10px;padding:9px 11px;font:inherit;font-size:13px;
+  transition:box-shadow .22s var(--ease),border-color .2s}
+textarea{min-height:72px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:none;border-color:transparent;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 65%,transparent)}
+input[type=color]{height:40px;padding:3px;cursor:pointer}
+.row{display:flex;gap:9px}.row>*{flex:1;min-width:0}
+.kinds{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.k{background:#0f141b;border:1px solid var(--line);border-radius:11px;padding:11px;cursor:pointer;
+  font:inherit;color:var(--dim);text-align:left;transition:all .2s var(--ease)}
+.k:hover{border-color:var(--faint);color:var(--ink);transform:translateY(-1px)}
+.k[aria-pressed=true]{border-color:transparent;color:#05080f;
+  background:linear-gradient(100deg,var(--accent),var(--accent2))}
+.k b{display:block;font-size:12.5px;font-weight:600}
+.k span{font-size:10.5px;opacity:.82;line-height:1.3}
+.btn{width:100%;margin-top:14px;border:0;border-radius:11px;padding:12px;font:inherit;
+  font-weight:600;color:#05080f;cursor:pointer;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));
+  transition:transform .16s var(--ease),filter .2s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.07)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.bar{height:5px;background:#131922;border-radius:999px;overflow:hidden;margin-top:12px}
+.bar i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));transition:width .2s linear}
+.note{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
+.warn{color:var(--warn)}.ok{color:var(--ok)}
+.v{display:inline-block;width:7px;height:7px;border-radius:50%;margin-left:6px;
+   vertical-align:middle;background:var(--ok)}
+.v.warn{background:var(--warn)}.v.fail{background:#e4635a}
+#kitout .note{display:flex;gap:7px;align-items:flex-start;margin:4px 0}
+#kitout .note .v{margin:6px 0 0}
+#ktabs{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 12px}
+#ktabs .k{flex:0 0 auto;padding:7px 12px;font-size:12px;border-radius:999px;
+          display:flex;align-items:center;gap:0}
+#ktabs .k b{font-weight:600}
+#kbody input,#kbody textarea{font-size:13px}
+#kbody .btn.sec{width:auto;padding:5px 12px;font-size:12px}
+.assets{max-height:230px;overflow:auto;border:1px solid var(--line);border-radius:11px;padding:10px;
+  background:#0c1118}
+.agroup{font-family:var(--m);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);margin:10px 0 6px}.agroup:first-child{margin-top:0}
+.agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.a{background:#11171f;border:1px solid var(--line);border-radius:9px;padding:5px;cursor:pointer;
+  aspect-ratio:1;transition:all .18s var(--ease)}
+.a:hover{border-color:var(--accent);transform:translateY(-2px)}
+.a[aria-pressed=true]{border-color:transparent;background:color-mix(in srgb,var(--accent) 24%,#11171f)}
+.a svg{width:100%;height:100%;fill:none;stroke:var(--dim);stroke-width:5;
+  stroke-linecap:round;stroke-linejoin:round}
+.a[aria-pressed=true] svg,.a:hover svg{stroke:var(--accent)}
+.chosen{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-family:var(--m);font-size:10px;padding:4px 9px;border-radius:999px;
+  border:1px solid var(--line);color:var(--dim);cursor:pointer}
+.chip:hover{border-color:var(--warn);color:var(--warn)}
+</style></head><body>
+<div class="wrap">
+  <div class="eyebrow">Craftly</div>
+  <h1>Video Studio</h1>
+
+  <div class="lay">
+    <div>
+      <div class="stage"><canvas id="c" width="1080" height="1350"></canvas>
+        <div class="hud"><span class="dot" id="dot"></span><span id="hud">ready</span></div>
+      </div>
+      <div class="scrub">
+        <button class="btn sec" id="play" style="width:auto;margin:0;padding:8px 16px">Play</button>
+        <input type="range" id="seek" min="0" max="1000" value="0">
+        <span class="note" id="tnow" style="margin:0;font-family:var(--m);min-width:74px;text-align:right">0.0 / 0.0s</span>
+      </div>
+      <p class="note" id="msg"></p>
+    </div>
+
+    <div class="panel">
+      <span class="lab">What kind of video</span>
+      <div class="kinds" id="kinds"></div>
+
+      <div id="fields"></div>
+
+      <span class="lab">Brand</span>
+      <div class="row">
+        <input id="mark" value="iCORE" placeholder="wordmark">
+        <input id="acc" type="color" value="#2f9e63">
+        <input id="base" type="color" value="#0e2340">
+      </div>
+
+      <span class="lab">Size</span>
+      <select id="size">
+        <option value="1080x1350" selected>4:5 feed</option>
+        <option value="1080x1920">9:16 story / reel</option>
+        <option value="1080x1080">1:1 square</option>
+        <option value="1920x1080">16:9 landscape</option>
+      </select>
+
+      <button class="btn" id="rec">Record the video</button>
+      <button class="btn sec" id="mp4">Record and convert to MP4</button>
+      <button class="btn sec" id="png">Save this frame</button>
+      <div class="bar"><i id="prog"></i></div>
+      <p class="note" id="rnote"></p>
+    </div>
+
+    <div class="panel" id="hub">
+      <span class="lab">Upload kit</span>
+      <p class="note" style="margin-top:0">Title, description, keywords and the
+        size check for each platform — written from the words in this video,
+        and nothing else. Craftly does not post it for you.</p>
+      <button class="btn sec" id="kitgo">Build the upload kit</button>
+      <div id="kitout"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets_line.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   Five kinds of video, drawn on a canvas and recorded by the browser.
+
+   No ffmpeg, no render queue, no server: MediaRecorder reads the canvas
+   through captureStream() and writes WebM, the same mechanism the Nexus
+   project story uses. What that costs is stated rather than hidden —
+   recording runs in real time, and WebM is not accepted by Instagram or
+   TikTok, so there is a button that sends the file to the studio for one
+   ffmpeg pass when MP4 is what you need.
+
+   Everything is a function of ONE NUMBER: the time in seconds. That is
+   what makes the scrubber, the preview and the recording the same thing
+   rather than three renderers that drift apart.
+   ══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const cv = $("c"), g = cv.getContext("2d", { alpha:false });
+
+/* ---------- geometry: paths flattened once, drawn progressively ------- */
+const cache = new Map();
+function flatten(d){
+  if (cache.has(d)) return cache.get(d);
+  const out = []; let cur = null, x = 0, y = 0, sx = 0, sy = 0;
+  const toks = d.match(/[MLCZ]|-?\d*\.?\d+/g) || [];
+  let i = 0;
+  const num = () => parseFloat(toks[i++]);
+  while (i < toks.length){
+    const t = toks[i++];
+    if (t === "M"){ x = num(); y = num(); sx = x; sy = y; cur = [[x,y]]; out.push(cur); }
+    else if (t === "L"){ x = num(); y = num(); cur.push([x,y]); }
+    else if (t === "C"){
+      const x1=num(), y1=num(), x2=num(), y2=num(), ex=num(), ey=num();
+      const n = 16;                        // enough that a 100-unit curve reads smooth
+      for (let k=1;k<=n;k++){
+        const u=k/n, v=1-u;
+        cur.push([v*v*v*x + 3*v*v*u*x1 + 3*v*u*u*x2 + u*u*u*ex,
+                  v*v*v*y + 3*v*v*u*y1 + 3*v*u*u*y2 + u*u*u*ey]);
+      }
+      x = ex; y = ey;
+    }
+    else if (t === "Z"){ cur.push([sx,sy]); x = sx; y = sy; }
+  }
+  // measure each polyline so progress can be shared across the whole asset
+  let total = 0;
+  const lines = out.map(pts => {
+    let len = 0; const cum = [0];
+    for (let k=1;k<pts.length;k++){
+      len += Math.hypot(pts[k][0]-pts[k-1][0], pts[k][1]-pts[k-1][1]); cum.push(len);
+    }
+    total += len; return { pts, cum, len };
+  });
+  const res = { lines, total };
+  cache.set(d, res); return res;
+}
+
+/* draw an asset into a box, revealed up to p (0..1). Returns the pen tip. */
+function drawArt(name, x, y, size, p, colour, width){
+  const src = TRACED[name] || FOUND[name] || ART[name] || [];
+  const paths = src.map(flatten);
+  const total = paths.reduce((s,f)=>s+f.total,0) || 1;
+  let want = p * total, tip = null;
+  g.save();
+  g.translate(x, y); g.scale(size/100, size/100);
+  g.strokeStyle = colour; g.lineWidth = (width||3) * 100/size;
+  g.lineCap = "round"; g.lineJoin = "round";
+  for (const f of paths){
+    if (want <= 0) break;
+    for (const L of f.lines){
+      if (want <= 0) break;
+      const take = Math.min(want, L.len);
+      g.beginPath(); g.moveTo(L.pts[0][0], L.pts[0][1]);
+      let drawn = 0;
+      for (let k=1;k<L.pts.length;k++){
+        const seg = L.cum[k] - L.cum[k-1];
+        if (drawn + seg <= take){ g.lineTo(L.pts[k][0], L.pts[k][1]); drawn += seg; tip = L.pts[k]; }
+        else {
+          const r = seg ? (take - drawn)/seg : 0;
+          const ex = L.pts[k-1][0] + (L.pts[k][0]-L.pts[k-1][0])*r;
+          const ey = L.pts[k-1][1] + (L.pts[k][1]-L.pts[k-1][1])*r;
+          g.lineTo(ex, ey); tip = [ex, ey]; drawn = take; break;
+        }
+      }
+      g.stroke(); want -= L.len;
+    }
+  }
+  g.restore();
+  return tip ? [x + tip[0]*size/100, y + tip[1]*size/100] : null;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   THE HAND
+
+   Four skin tones and three tools, because a whiteboard video is
+   watched as if a person were drawing it and a single pale hand is a
+   person for only some of the audience. The tones are from a standard
+   emoji-modifier scale rather than invented, so they read as deliberate.
+
+   The hand carries a soft shadow on the board. Without it the hand sits
+   ON the picture rather than ABOVE it, which is the single clearest
+   tell that a whiteboard animation was made by a template.
+   ────────────────────────────────────────────────────────────────── */
+const SKIN = {
+  light:  ["#f6ddc8", "#e0b091", "#c2855f"],
+  medium: ["#e6b78f", "#c8906a", "#a06b48"],
+  tan:    ["#cb9268", "#a97049", "#834f2f"],
+  deep:   ["#8f5d3d", "#6e4228", "#4d2c18"],
+};
+const SLEEVES = {
+  charcoal: "#2b3240", denim: "#3c5a80", shirt: "#dfe4ec",
+  olive: "#4d5640", none: "none",
+};
+/* len = how far the barrel runs from the nib, w = its half-width, nib =
+   the length of the cone. A marker is short and fat, a pencil long and
+   thin: that difference is most of what tells them apart at this size. */
+const TOOLS = {
+  pen:    {len:1.26, w:0.052, nib:0.17, body:"#1f2733", band:"#8d96a6", tip:"#141821"},
+  marker: {len:1.18, w:0.092, nib:0.21, body:"#31343a", band:"#c8ccd4", tip:"#15171b"},
+  pencil: {len:1.32, w:0.044, nib:0.13, body:"#d8a93c", band:"#b9bcc2", tip:"#5a4522"},
+};
+
+/* ──────────────────────────────────────────────────────────────────
+   THE HAND
+
+   Everything is drawn in a frame whose ORIGIN IS THE NIB and whose +y
+   runs back along the barrel into the hand. That one decision removes
+   most of the arithmetic: the tool is a rectangle on the y axis, the
+   fingers cross it, and the whole frame is simply rotated to whatever
+   angle the stroke needs.
+
+   The order is what makes it a grip rather than an overlap:
+
+       forearm and cuff → fingers BEHIND the barrel → the barrel
+       → index and thumb IN FRONT → the palm
+
+   Draw the fingers all on one side and the hand looks pasted on top of
+   the pen. Three knuckles peeking past the far edge of the barrel is
+   the whole illusion.
+
+   The shadow is three stacked ellipses rather than a blur filter —
+   cheap, works in every browser, and survives being recorded. On a dark
+   surface a black shadow is invisible, so there the hand gets a rim of
+   light along its upper edge instead: the same job, done by the only
+   means a dark board leaves.
+   ────────────────────────────────────────────────────────────────── */
+function drawHand(x, y, s, style){
+  const sk = SKIN[style.skin] || SKIN.light;
+  const tl = TOOLS[style.tool] || TOOLS.pen;
+  const dark = !!style.dark;
+  const sleeve = SLEEVES[style.sleeve] || style.sleeve || "#2b3240";
+  const w = tl.w;
+
+  const P = (a,b)=>[s*a, s*b];
+  // a finger is a round-capped stroke: one call, and it ends in a fingertip
+  const finger = (x1,y1,cx,cy,x2,y2,r,col)=>{
+    g.strokeStyle = col; g.lineWidth = s*r*2; g.lineCap = "round";
+    g.beginPath(); g.moveTo(s*x1, s*y1);
+    g.quadraticCurveTo(s*cx, s*cy, s*x2, s*y2); g.stroke();
+  };
+
+  g.save();
+  g.translate(x, y); g.rotate(style.angle == null ? -0.42 : style.angle);
+  g.lineJoin = "round";
+
+  /* ---- shadow: three ellipses, widest and faintest first ---- */
+  if (!dark){
+    g.save(); g.translate(s*0.26, s*0.30); g.fillStyle = "#000";
+    [[1.06,0.040],[0.92,0.050],[0.78,0.065]].forEach(([k,a])=>{
+      g.globalAlpha = a; g.beginPath();
+      g.ellipse(s*0.56, s*1.38, s*0.50*k, s*0.34*k, 0.5, 0, 6.283); g.fill();
+    });
+    g.globalAlpha = 0.045; g.lineCap = "round"; g.strokeStyle = "#000";
+    g.lineWidth = s*0.13; g.beginPath();
+    g.moveTo(s*0.02, s*0.46); g.lineTo(s*0.34, s*1.16); g.stroke();
+    g.restore();
+  }
+
+  /* ---- forearm, then the cuff across it ---- */
+  const ax = 0.70, ay = 1.52, dx = 0.66, dy = 0.75;   // direction of the arm
+  const reach = Math.max(2.6, style.reach || 2.6);
+  g.strokeStyle = sk[1]; g.lineWidth = s*0.60; g.lineCap = "butt";
+  g.beginPath(); g.moveTo(s*ax, s*ay);
+  g.lineTo(s*(ax+dx*reach), s*(ay+dy*reach)); g.stroke();
+
+  if (sleeve !== "none"){
+    const cx0 = ax + dx*0.62, cy0 = ay + dy*0.62;     // where the cuff sits
+    const px = -dy, py = dx;                          // across the arm
+    // hw may be negative: that draws the band on the shaded underside
+    // only, which is what turns a flat wedge into a sleeve on an arm.
+    const quad = (t0, t1, hw) => {
+      const lo = hw < 0 ? -hw * 0.42 : -hw, hi = hw < 0 ? -hw : hw;
+      g.beginPath();
+      g.moveTo(s*(cx0+dx*t0+px*hi), s*(cy0+dy*t0+py*hi));
+      g.lineTo(s*(cx0+dx*t1+px*hi), s*(cy0+dy*t1+py*hi));
+      g.lineTo(s*(cx0+dx*t1+px*lo), s*(cy0+dy*t1+py*lo));
+      g.lineTo(s*(cx0+dx*t0+px*lo), s*(cy0+dy*t0+py*lo));
+      g.closePath();
+    };
+    g.fillStyle = sleeve;            quad(-0.10, reach, 0.300); g.fill();
+    g.fillStyle = "rgba(0,0,0,.18)";  quad(-0.10, reach, -0.300); g.fill();
+    g.fillStyle = "rgba(0,0,0,.20)";  quad(-0.10, 0.08, 0.300); g.fill();
+    g.fillStyle = "rgba(255,255,255,.12)"; quad(0.08, 0.30, 0.300); g.fill();
+  }
+
+  /* ---- the three fingers folded BEHIND the barrel ---- */
+  finger(0.46,1.06, 0.12,0.92, -w-0.050,0.80, 0.062, sk[2]);
+  finger(0.50,1.20, 0.16,1.08, -w-0.038,0.98, 0.058, sk[2]);
+  finger(0.54,1.34, 0.22,1.26, -w-0.022,1.16, 0.050, sk[2]);
+
+  /* ---- the tool ---- */
+  g.fillStyle = tl.tip;                                   // the cone
+  g.beginPath(); g.moveTo(0, 0);
+  g.lineTo(s*-w*0.92, s*tl.nib); g.lineTo(s*w*0.92, s*tl.nib);
+  g.closePath(); g.fill();
+  g.fillStyle = tl.body;                                  // the barrel
+  g.beginPath();
+  g.moveTo(s*-w, s*tl.nib); g.lineTo(s*-w*1.06, s*tl.len);
+  g.lineTo(s*w*1.06, s*tl.len); g.lineTo(s*w, s*tl.nib);
+  g.closePath(); g.fill();
+  g.fillStyle = "rgba(255,255,255,.14)";                  // a highlight edge
+  g.fillRect(s*-w*0.72, s*tl.nib, s*w*0.42, s*(tl.len-tl.nib));
+  g.fillStyle = tl.band;                                  // the ferrule
+  g.fillRect(s*-w*1.02, s*(tl.nib+0.17), s*w*2.04, s*0.055);
+
+  /* ---- index and thumb, over the barrel ---- */
+  finger(0.44,1.00, 0.10,0.70, -w*0.25,0.56, 0.066, sk[0]);
+  finger(0.16,1.30, 0.02,1.08,  w*0.95,0.99, 0.072, sk[0]);
+
+  /* ---- the back of the hand, last, so it joins everything ---- */
+  const gr = g.createLinearGradient(0, s*0.92, s*0.95, s*1.80);
+  gr.addColorStop(0, sk[0]); gr.addColorStop(1, sk[1]);
+  g.fillStyle = gr;
+  g.beginPath();
+  g.moveTo(s*0.04, s*1.10);
+  g.bezierCurveTo(s*-0.04, s*1.34, s*0.06, s*1.62, s*0.32, s*1.74);
+  g.bezierCurveTo(s*0.60, s*1.86, s*0.86, s*1.66, s*0.90, s*1.40);
+  g.bezierCurveTo(s*0.92, s*1.14, s*0.78, s*0.98, s*0.54, s*0.95);
+  g.bezierCurveTo(s*0.30, s*0.92, s*0.12, s*0.98, s*0.04, s*1.10);
+  g.closePath(); g.fill();
+
+  g.strokeStyle = "rgba(0,0,0,.10)"; g.lineWidth = s*0.016; // knuckles
+  [[0.30,1.16,0.52,1.10],[0.36,1.30,0.60,1.22],[0.44,1.44,0.66,1.36]]
+    .forEach(([a,b,c,d])=>{ g.beginPath(); g.moveTo(s*a,s*b);
+      g.quadraticCurveTo(s*((a+c)/2), s*((b+d)/2-0.03), s*c, s*d); g.stroke(); });
+
+  if (dark){                                   // a rim where a shadow cannot go
+    g.strokeStyle = "rgba(255,255,255,.26)"; g.lineWidth = s*0.022;
+    g.beginPath();
+    g.moveTo(s*0.16, s*1.08);
+    g.bezierCurveTo(s*0.30, s*0.95, s*0.52, s*0.93, s*0.70, s*0.98);
+    g.stroke();
+  }
+  g.restore();
+}
+
+/* ---------- small helpers ---------- */
+const hex2rgb = h => { h=h.replace("#",""); if(h.length===3) h=[...h].map(c=>c+c).join("");
+  return [0,2,4].map(i=>parseInt(h.slice(i,i+2),16)); };
+const mix = (a,b,t)=>a.map((v,i)=>Math.round(v+(b[i]-v)*t));
+const rgb = c=>`rgb(${c[0]},${c[1]},${c[2]})`;
+const ease = t => t<0?0 : t>1?1 : 1-Math.pow(1-t,3);
+const clamp01 = t => Math.max(0, Math.min(1, t));
+function wrap(text, max, font){
+  g.font = font;
+  const out=[]; let cur="";
+  for (const w of String(text||"").split(/\s+/)){
+    const t=(cur?cur+" ":"")+w;
+    if (g.measureText(t).width<=max||!cur) cur=t; else { out.push(cur); cur=w; }
+  }
+  if (cur) out.push(cur); return out;
+}
+function lines(id){ return ($(id)?.value || "").split("\n").map(s=>s.trim()).filter(Boolean); }
+const F = (w,s) => `${w} ${s}px "Instrument Sans",system-ui,sans-serif`;
+
+/* ---------- the five kinds ---------- */
+const KINDS = {
+  mcq:   {name:"Quiz / MCQ",     hint:"Question, countdown, answer"},
+  qa:    {name:"Question & answer", hint:"Ask, pause, reveal"},
+  slides:{name:"Presentation",   hint:"Title and builds"},
+  anim:  {name:"Animated",       hint:"Kinetic text and icons"},
+  board: {name:"Whiteboard",     hint:"Drawn by hand, line by line"},
+};
+let KIND = "mcq", picked = ["bulb","team","bars"];
+let TRACED = {};                       // name -> paths, from /api/trace
+
+/* Four surfaces. A whiteboard is not the only board worth drawing on,
+   and the same scene on slate or blueprint stops looking like a
+   classroom and starts looking like a studio. */
+const BOARDS = {
+  paper:     {name:"Paper",     bg:"#f6f5f1", ink:"#23221f", grid:"rgba(0,0,0,.045)",
+              sleeve:"#263142", dark:false},
+  slate:     {name:"Slate",     bg:"#10141b", ink:"#e8edf5", grid:"rgba(255,255,255,.05)",
+              sleeve:"#e8edf5", dark:true},
+  blueprint: {name:"Blueprint", bg:"#0c2340", ink:"#cfe4ff", grid:"rgba(180,215,255,.10)",
+              sleeve:"#cfe4ff", dark:true},
+  neon:      {name:"Neon",      bg:"#07070c", ink:"#f2e9ff", grid:"rgba(150,110,255,.08)",
+              sleeve:"#9a7bff", dark:true, glow:true},
+};
+let BOARD = "paper";
+let HAND = {skin:"light", tool:"pen", sleeve:"charcoal", pick:"auto"};
+/* A charcoal cuff on a near-black board is a hole, not a sleeve. Auto
+   simply flips to a light fabric on the dark surfaces; choosing one
+   explicitly turns that off, because a stated choice outranks a rule. */
+function sleeveAuto(){
+  if (HAND.pick !== "auto") return;
+  HAND.sleeve = (BOARDS[BOARD] && BOARDS[BOARD].dark) ? "shirt" : "charcoal";
+}
+
+const FIELDS = {
+  mcq: `<span class="lab">Question</span><input id="q" value="What does 'bankable' actually mean?">
+    <span class="lab">Options — the first is the right one</span>
+    <textarea id="opts">A lender can see who repays them
+The project is profitable
+It has government backing
+The return clears 15%</textarea>
+    <span class="lab">Why</span><input id="why" value="Bankability is repayment certainty, not profit.">
+    <span class="lab">Countdown</span><select id="cd"><option>3</option><option selected>4</option><option>5</option></select>`,
+  qa: `<span class="lab">Question</span><input id="q" value="What happens if the answer is no?">
+    <span class="lab">Answer</span><textarea id="ans">If nobody can say, the study was never going to change anything.</textarea>`,
+  slides: `<span class="lab">Title</span><input id="title" value="Five questions before you commission a study">
+    <span class="lab">Points — one per line</span>
+    <textarea id="pts" style="min-height:112px">What decision does this serve?
+Are we willing to hear no?
+Who carries each risk?
+What happens after approval?</textarea>`,
+  anim: `<span class="lab">Lines — one per line</span>
+    <textarea id="pts" style="min-height:112px">A PPP is not a funding route.
+It is an allocation of risk.
+The money follows the allocation.</textarea>
+    <span class="lab">Icons</span><div id="assets" class="assets"></div>
+    <div class="chosen" id="chosen"></div>`,
+  board: `<span class="lab">Lines — one per line, each drawn with its icon</span>
+    <textarea id="pts" style="min-height:96px">Name the decision
+Name who carries the risk
+Then run the numbers</textarea>
+    <span class="lab">Draw your own photograph</span>
+    <input type="file" id="tracefile" accept="image/*">
+    <div class="row" style="margin-top:8px">
+      <label class="note" style="margin:0;display:flex;gap:7px;align-items:center;flex:0 0 auto">
+        <input type="checkbox" id="tracecut" checked style="width:auto"> cut out first</label>
+      <select id="tracedetail" style="flex:0 0 130px">
+        <option value="0.7">Bold lines</option>
+        <option value="1.0" selected>Normal</option>
+        <option value="1.6">Fine detail</option></select>
+    </div>
+    <p class="note" id="tracemsg">A product shot traces best with the cut-out on; a textured
+      subject like a building traces better with it off.</p>
+    <span class="lab">Icons — tap to choose, in order</span>
+    <input id="asearch" placeholder="Search 10,000+ assets — solar, bank, truck…"
+           autocomplete="off" style="margin-bottom:8px">
+    <div id="assets" class="assets"></div>
+    <div class="chosen" id="chosen"></div>`,
+};
+
+/* each kind says how long it runs, from its own content */
+function duration(){
+  if (KIND==="mcq")    return 2.2 + (+($("cd")?.value||4)) + 3.4;
+  if (KIND==="qa")     return 2.6 + 3.6;
+  if (KIND==="slides") return 2.4 + lines("pts").length * 1.5 + 1.6;
+  if (KIND==="anim")   return 1.0 + lines("pts").length * 2.2 + 1.4;
+  if (KIND==="board")  return 1.0 + lines("pts").length * 3.0 + 1.6;
+  return 8;
+}
+
+/* ---------- the render ---------- */
+function frame(T){
+  const W = cv.width, H = cv.height, S = W/1080;
+  const acc = hex2rgb($("acc").value), base = hex2rgb($("base").value);
+  const ink = "#ffffff", dim = rgb(mix(base,[255,255,255],0.55));
+  const B = BOARDS[BOARD] || BOARDS.paper;
+  const drawn = KIND === "board";
+
+  if (drawn || BOARD !== "paper"){
+    // a chosen surface wins over the brand gradient, on every kind
+    g.fillStyle = B.bg; g.fillRect(0,0,W,H);
+    g.strokeStyle = B.grid; g.lineWidth = 1;
+    for (let x=0;x<W;x+=60*S){ g.beginPath(); g.moveTo(x,0); g.lineTo(x,H); g.stroke(); }
+    for (let y=0;y<H;y+=60*S){ g.beginPath(); g.moveTo(0,y); g.lineTo(W,y); g.stroke(); }
+    if (B.glow){
+      const gr2 = g.createRadialGradient(W*0.74,H*0.22,0,W*0.74,H*0.22,W*0.9);
+      gr2.addColorStop(0, "rgba(140,90,255,.20)"); gr2.addColorStop(1,"rgba(0,0,0,0)");
+      g.fillStyle = gr2; g.fillRect(0,0,W,H);
+    }
+  } else {
+    const gr = g.createLinearGradient(0,0,W*0.4,H);
+    gr.addColorStop(0, rgb(mix(base,[0,0,0],0.32)));
+    gr.addColorStop(0.58, rgb(base));
+    gr.addColorStop(1, rgb(mix(base,acc,0.24)));
+    g.fillStyle = gr; g.fillRect(0,0,W,H);
+  }
+  const paper = drawn;
+
+  const m = W*0.085;
+  g.textBaseline = "top";
+  g.fillStyle = (drawn || BOARD !== "paper") ? B.ink : ink;
+  g.font = F(700, 30*S);
+  g.fillText($("mark").value||"", m, H*0.055);
+
+  if (KIND==="mcq")    mcq(T,W,H,S,m,acc,ink,dim);
+  if (KIND==="qa")     qa(T,W,H,S,m,acc,ink,dim);
+  if (KIND==="slides") slides(T,W,H,S,m,acc,ink,dim);
+  if (KIND==="anim")   anim(T,W,H,S,m,acc,base,ink);
+  if (KIND==="board")  board(T,W,H,S,m,acc);
+
+  // the progress rule, so a viewer knows how long is left
+  if (!paper){
+    g.fillStyle = "rgba(255,255,255,.14)"; g.fillRect(0,H-8*S,W,8*S);
+    g.fillStyle = rgb(acc); g.fillRect(0,H-8*S,W*clamp01(T/duration()),8*S);
+  }
+}
+
+function mcq(T,W,H,S,m,acc,ink,dim){
+  const cd = +($("cd")?.value||4), q = $("q")?.value||"", opts = lines("opts");
+  const fq = F(600, 58*S), qls = wrap(q, W-2*m, fq);
+  const rowh = 104*S;
+  const blockH = qls.length*68*S + 52*S + opts.length*rowh;
+  const qy = Math.max(H*0.17, (H - blockH)/2);
+  g.font = fq; g.fillStyle = ink;
+  const qa_ = ease(T/0.7);
+  qls.forEach((l,i)=>{ g.globalAlpha=qa_; g.fillText(l, m, qy + i*68*S + (1-qa_)*14*S); });
+  g.globalAlpha = 1;
+
+  const top = qy + qls.length*68*S + 52*S;
+  const reveal = 2.2 + cd;
+  opts.forEach((o,i)=>{
+    const a = ease((T - (0.8 + i*0.22))/0.5); if (a<=0) return;
+    const right = i===0 && T >= reveal;
+    g.globalAlpha = a;
+    const y = top + i*rowh + (1-a)*16*S;
+    g.fillStyle = right ? rgb(acc) : "rgba(255,255,255,.07)";
+    g.beginPath(); g.roundRect(m, y, W-2*m, 84*S, 14*S); g.fill();
+    if (!right){ g.strokeStyle="rgba(255,255,255,.14)"; g.lineWidth=2*S; g.stroke(); }
+    g.fillStyle = right ? "#04140b" : ink;
+    g.font = F(600, 34*S);
+    g.fillText("ABCD"[i], m+28*S, y+25*S);
+    g.font = F(500, 34*S);
+    g.fillText(o, m+78*S, y+25*S);
+    g.globalAlpha = 1;
+  });
+
+  if (T >= 1.6 && T < reveal){                       // the countdown ring
+    const left = reveal - T, p = left/cd;
+    const r = 56*S, cx = W - m - r, cy = H*0.115;
+    g.strokeStyle = "rgba(255,255,255,.18)"; g.lineWidth = 9*S;
+    g.beginPath(); g.arc(cx,cy,r,0,6.283); g.stroke();
+    g.strokeStyle = rgb(acc); g.lineCap = "round";
+    g.beginPath(); g.arc(cx,cy,r,-1.5708,-1.5708+6.283*p); g.stroke();
+    g.fillStyle = ink; g.font = F(700, 48*S); g.textAlign="center"; g.textBaseline="middle";
+    g.fillText(String(Math.ceil(left)), cx, cy);
+    g.textAlign="left"; g.textBaseline="top"; g.lineCap="butt";
+  }
+  if (T >= reveal + 0.5){
+    const a = ease((T-reveal-0.5)/0.6);
+    g.globalAlpha = a; g.fillStyle = dim; g.font = F(400, 30*S);
+    wrap($("why")?.value||"", W-2*m, F(400,30*S))
+      .forEach((l,i)=>g.fillText(l, m, H*0.86 + i*40*S));
+    g.globalAlpha = 1;
+  }
+}
+
+function qa(T,W,H,S,m,acc,ink,dim){
+  const q = $("q")?.value||"", ans = $("ans")?.value||"";
+  const fq = F(600, 60*S), qls = wrap(q, W-2*m, fq);
+  const fa0 = F(500, 44*S), als = wrap(ans, W-2*m, fa0);
+  // the answer is measured even before it appears, so the question does
+  // not jump up the frame when it arrives
+  const blockH = qls.length*72*S + 26*S + 60*S + als.length*58*S;
+  const qy = Math.max(H*0.18, (H - blockH)/2);
+  const a1 = ease(T/0.8);
+  g.font = fq; g.fillStyle = ink; g.globalAlpha = a1;
+  qls.forEach((l,i)=>g.fillText(l, m, qy + i*72*S + (1-a1)*16*S));
+  g.globalAlpha = 1;
+  const ry = qy + qls.length*72*S + 26*S;
+  g.fillStyle = rgb(acc);
+  g.fillRect(m, ry, (W-2*m)*ease((T-0.6)/0.7)*0.30, 6*S);
+
+  if (T >= 2.6){
+    const a2 = ease((T-2.6)/0.8);
+    const fa = F(500, 44*S);
+    g.font = fa; g.fillStyle = rgb(mix(hex2rgb("#ffffff"), acc, 0.25));
+    g.globalAlpha = a2;
+    wrap(ans, W-2*m, fa).forEach((l,i)=>
+      g.fillText(l, m, ry + 60*S + i*58*S + (1-a2)*18*S));
+    g.globalAlpha = 1;
+  }
+}
+
+function slides(T,W,H,S,m,acc,ink,dim){
+  const title = $("title")?.value||"", pts = lines("pts");
+  const ft = F(600, 56*S), tls = wrap(title, W-2*m, ft);
+  const a = ease(T/0.9);
+  g.font = ft; g.fillStyle = ink; g.globalAlpha = a;
+  tls.forEach((l,i)=>g.fillText(l, m, H*0.17 + i*66*S + (1-a)*16*S));
+  g.globalAlpha = 1;
+  g.fillStyle = rgb(acc);
+  g.fillRect(m, H*0.17 + tls.length*66*S + 24*S, 120*S*ease((T-0.5)/0.6), 6*S);
+
+  const top = H*0.17 + tls.length*66*S + 70*S;
+  const fp = F(500, 38*S);
+  let y = top;
+  pts.forEach((p,i)=>{
+    const at = 2.4 + i*1.5, al = ease((T-at)/0.7); if (al<=0) return;
+    g.globalAlpha = al;
+    g.strokeStyle = rgb(acc); g.lineWidth = 3*S;
+    g.beginPath(); g.arc(m+12*S, y+22*S, 11*S, 0, 6.283); g.stroke();
+    g.fillStyle = ink; g.font = fp;
+    const ls = wrap(p, W-2*m-64*S, fp);
+    ls.forEach((l,k)=>g.fillText(l, m+48*S, y + k*50*S + (1-al)*12*S));
+    y += ls.length*50*S + 34*S;
+    g.globalAlpha = 1;
+  });
+}
+
+function anim(T,W,H,S,m,acc,base,ink){
+  const pts = lines("pts");
+  // an accent shape that keeps moving, so the frame is never static
+  const th = T*0.5;
+  g.save(); g.translate(W*0.80, H*0.20); g.rotate(th);
+  g.strokeStyle = rgb(mix(base,acc,0.55)); g.lineWidth = 3*S;
+  g.beginPath();
+  for (let i=0;i<6;i++){ const a=i/6*6.283, r=150*S;
+    i?g.lineTo(Math.cos(a)*r,Math.sin(a)*r):g.moveTo(Math.cos(a)*r,Math.sin(a)*r); }
+  g.closePath(); g.stroke(); g.restore();
+
+  pts.forEach((p,i)=>{
+    const at = 1.0 + i*2.2, a = ease((T-at)/0.65), out = ease((T-at-1.9)/0.5);
+    // A line must leave completely. At 10% opacity the previous line is
+    // still legible behind the next one, which reads as a rendering fault
+    // rather than a transition — it showed up the moment I looked at a
+    // frame instead of the code.
+    const alpha = a * (1 - out);
+    if (alpha <= 0.012) return;
+    const y = H*0.40 + (1-a)*40*S - out*30*S;
+    const icon = picked[i % Math.max(1,picked.length)];
+    if (icon){
+      g.globalAlpha = alpha;
+      drawArt(icon, m, y - 210*S, 160*S, clamp01((T-at)/0.9), rgb(acc), 5*S);
+    }
+    const fp = F(600, 54*S);
+    g.globalAlpha = alpha; g.fillStyle = ink; g.font = fp;
+    wrap(p, W-2*m, fp).forEach((l,k)=>g.fillText(l, m, y + k*64*S));
+    g.globalAlpha = 1;
+  });
+}
+
+function board(T,W,H,S,m,acc){
+  const pts = lines("pts");
+  const B = BOARDS[BOARD] || BOARDS.paper;
+  const pen = B.ink, accs = $("acc").value;
+  if (B.glow){ g.shadowColor = accs; g.shadowBlur = 18*S; }
+  let tip = null, active = -1;
+  pts.forEach((p,i)=>{
+    const at = 1.0 + i*3.0;
+    const pIcon = clamp01((T-at)/1.3);
+    const pText = clamp01((T-at-1.1)/1.2);
+    if (pIcon<=0) return;
+    const y = H*0.22 + i*(H*0.20);
+    const icon = picked[i % Math.max(1,picked.length)];
+    if (icon){
+      const t2 = drawArt(icon, m, y, 130*S, pIcon, i%2 ? accs : pen, 4.5*S);
+      if (pIcon < 1){ tip = t2; active = i; }
+    }
+    // typed text is revealed left to right, the way a whiteboard tool does it
+    const fp = F(600, 46*S);
+    g.save();
+    const tx = m + 165*S, tw = (W - tx - m) * pText;
+    g.beginPath(); g.rect(tx, y-10*S, tw, 180*S); g.clip();
+    g.fillStyle = pen; g.font = fp;
+    wrap(p, W-tx-m, fp).forEach((l,k)=>g.fillText(l, tx, y + 28*S + k*56*S));
+    g.restore();
+    if (pText>0 && pText<1){
+      const ls = wrap(p, W-tx-m, fp);
+      tip = [tx + tw, y + 28*S + (ls.length-1)*56*S + 24*S]; active = i;
+    }
+  });
+  g.shadowBlur = 0;
+  if (tip){
+    const hs = 118*S;
+    drawHand(tip[0], tip[1], hs, Object.assign({}, HAND, {
+      dark: !!(BOARDS[BOARD]||{}).dark,
+      reach: Math.hypot(cv.width, cv.height) / hs }));
+  }
+}
+
+/* ---------- playback ---------- */
+let T = 0, playing = false, last = 0, recording = false;
+function loop(ts){
+  requestAnimationFrame(loop);
+  const dt = Math.min(0.05, (ts-last)/1000 || 0.016); last = ts;
+  const D = duration();
+  if (playing){ T += dt; if (T > D){ T = D; playing = false; $("play").textContent="Play"; } }
+  frame(T);
+  if (!recording){
+    $("seek").value = Math.round(T/D*1000);
+    $("tnow").textContent = T.toFixed(1)+" / "+D.toFixed(1)+"s";
+  }
+}
+requestAnimationFrame(loop);
+$("play").onclick = ()=>{ const D=duration(); if (T>=D) T=0;
+  playing=!playing; $("play").textContent = playing?"Pause":"Play"; };
+$("seek").oninput = ()=>{ playing=false; $("play").textContent="Play";
+  T = (+$("seek").value/1000)*duration(); };
+
+/* ---------- controls ---------- */
+function paintKinds(){
+  $("kinds").innerHTML = Object.entries(KINDS).map(([k,v])=>
+    `<button class="k" data-k="${k}" aria-pressed="${k===KIND}"><b>${v.name}</b><span>${v.hint}</span></button>`).join("");
+}
+/* The built-in 84 are grouped and browsable. The other ten thousand are
+   not — a dropdown of ten thousand is a dropdown nobody opens. They are
+   searched on the studio, which holds the index and sends back only the
+   paths for what matched. */
+let FOUND = {};
+let searchTimer = null;
+async function searchAssets(term){
+  const host = $("assets"); if (!host) return;
+  if (!term){ FOUND = {}; paintAssets(); return; }
+  try{
+    const t = new URLSearchParams(location.search).get("t") || "";
+    const r = await fetch("/api/assets/search?q=" + encodeURIComponent(term) +
+                          "&n=60" + (t ? "&t=" + encodeURIComponent(t) : ""));
+    const j = await r.json();
+    if (j.error) throw new Error(j.error);
+    FOUND = {};
+    (j.hits || []).forEach(h => { FOUND[h.key] = h.paths; });
+    paintAssets(j.total);
+  }catch(e){
+    host.innerHTML = '<p class="note warn">' + e.message + '</p>';
+  }
+}
+
+function paintAssets(total){
+  const host = $("assets"); if (!host) return;
+  const found = Object.keys(FOUND);
+  let groups;
+  if (found.length){
+    groups = [["Found" + (total ? " in " + total.toLocaleString() : ""), found]];
+  } else {
+    groups = Object.keys(TRACED).length
+      ? [["Yours", Object.keys(TRACED)]].concat(ART_GROUPS) : ART_GROUPS;
+  }
+  host.innerHTML = groups.map(([label, ids])=>
+    `<div class="agroup">${label}</div><div class="agrid">` + ids.map(id=>
+      `<button class="a" data-a="${id}" title="${id}" aria-pressed="${picked.includes(id)}">
+        <svg viewBox="0 0 100 100" ${TRACED[id]?'stroke-width="1.5"':""}>
+          ${((TRACED[id]||FOUND[id]||ART[id]||[])).map(d=>`<path d="${d}"/>`).join("")}</svg>
+      </button>`).join("") + `</div>`).join("");
+  host.onclick = e => { const b=e.target.closest(".a"); if(!b) return;
+    const id=b.dataset.a;
+    if (picked.includes(id)) picked = picked.filter(x=>x!==id); else picked.push(id);
+    paintAssets(); paintChosen(); };
+  paintChosen();
+}
+function paintChosen(){
+  const host = $("chosen"); if (!host) return;
+  host.innerHTML = picked.length
+    ? picked.map((id,i)=>`<span class="chip" data-x="${i}">${i+1}. ${id} ×</span>`).join("")
+    : '<span class="note" style="margin:0">Pick a few — they are used in order, one per line.</span>';
+  host.onclick = e => { const c=e.target.closest(".chip"); if(!c) return;
+    picked.splice(+c.dataset.x,1); paintAssets(); };
+}
+const STYLE_FIELDS = `
+  <span class="lab">Surface</span>
+  <div class="kinds" id="boards"></div>
+  <span class="lab">The hand</span>
+  <div class="row">
+    <select id="h-skin">
+      <option value="light">Light</option><option value="medium">Medium</option>
+      <option value="tan">Tan</option><option value="deep">Deep</option></select>
+    <select id="h-tool">
+      <option value="pen">Pen</option><option value="marker">Marker</option>
+      <option value="pencil">Pencil</option></select>
+    <select id="h-sleeve">
+      <option value="auto">Sleeve: auto</option><option value="charcoal">Charcoal</option>
+      <option value="denim">Denim</option><option value="shirt">White shirt</option>
+      <option value="olive">Olive</option><option value="none">Bare arm</option></select>
+  </div>`;
+
+function paintBoards(){
+  const host = $("boards"); if (!host) return;
+  host.innerHTML = Object.entries(BOARDS).map(([k,v])=>
+    `<button class="k" data-b="${k}" aria-pressed="${k===BOARD}"><b>${v.name}</b></button>`).join("");
+  host.onclick = e => { const b=e.target.closest(".k"); if(!b) return;
+    BOARD = b.dataset.b; sleeveAuto(); paintBoards(); };
+}
+
+/* A photograph becomes line art on the studio, with OpenCV and rembg,
+   and comes back as paths this page draws exactly like a built-in asset.
+   That is the whole point of doing it server-side: the hand does not
+   care where the lines came from. */
+async function traceFile(file){
+  const msg = $("tracemsg");
+  if (!file) return;
+  msg.innerHTML = '<span class="spin"></span>Tracing on the studio…';
+  try{
+    const t = new URLSearchParams(location.search).get("t") || "";
+    const q = new URLSearchParams({detail: $("tracedetail").value,
+                                  cutout: $("tracecut").checked ? "1" : "0"});
+    if (t) q.set("t", t);
+    const r = await fetch("/api/trace?"+q.toString(),
+      {method:"POST", headers:{"Content-Type":"application/octet-stream"}, body:file});
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || ("error "+r.status));
+    const name = "traced:" + (file.name||"image").replace(/\.\w+$/,"").slice(0,18);
+    TRACED[name] = j.paths;
+    if (!picked.includes(name)) picked.unshift(name);
+    paintAssets();
+    msg.innerHTML = '<span class="ok">Drawn from your image — '+j.count+
+      ' lines.</span> It is first in the list, so it is drawn first.';
+  }catch(e){ msg.innerHTML = '<span class="warn">'+e.message+'</span>'; }
+}
+
+function setKind(k){
+  KIND = k; T = 0; playing = false; $("play").textContent="Play";
+  $("fields").innerHTML = (FIELDS[k] || "") + STYLE_FIELDS;
+  const tf = $("tracefile");
+  if (tf) tf.onchange = ()=> traceFile(tf.files[0]);
+  const as = $("asearch");
+  if (as) as.oninput = ()=>{
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(()=> searchAssets(as.value.trim()), 220);
+  };
+  const sk = $("h-skin"), tl = $("h-tool");
+  if (sk) sk.onchange = ()=> HAND.skin = sk.value;
+  if (tl) tl.onchange = ()=> HAND.tool = tl.value;
+  const sv = $("h-sleeve");
+  if (sv) sv.onchange = ()=>{ HAND.pick = sv.value;
+    if (sv.value === "auto") sleeveAuto(); else HAND.sleeve = sv.value; };
+  sleeveAuto();
+  paintKinds(); paintBoards(); paintAssets();
+}
+$("kinds").onclick = e => { const b=e.target.closest(".k"); if(b) setKind(b.dataset.k); };
+$("size").onchange = ()=>{ const [w,h]=$("size").value.split("x").map(Number);
+  cv.width=w; cv.height=h; document.querySelector(".stage").style.aspectRatio=w+"/"+h; };
+
+/* ──────────────────────────────────────────────────────────────────
+   THE UPLOAD KIT
+
+   The studio writes the copy, because the studio is where the words
+   already are: a kit assembled in the browser from an empty form is a
+   kit of guesses. What comes back is checked against the real file —
+   this canvas's size, this video's duration, this recording's bytes —
+   so the warnings are arithmetic rather than advice.
+
+   Every field is editable before it is copied. A caption nobody can
+   change is a caption nobody will use.
+   ────────────────────────────────────────────────────────────────── */
+let LASTFILE = null;                 // {mb, container} from the last record
+
+function kitContent(){
+  const v = id => { const e = $(id); return e ? e.value.trim() : ""; };
+  const ls = t => (t||"").split("\n").map(x=>x.trim()).filter(Boolean);
+  if (KIND === "mcq")    return {headline: v("q"), lines: ls(v("opts"))};
+  if (KIND === "qa")     return {headline: v("q"), lines: [v("a")].filter(Boolean)};
+  if (KIND === "slides") return {headline: ls(v("sl"))[0] || "",
+                                 lines: ls(v("sl")).slice(1)};
+  if (KIND === "anim")   return {headline: v("head"), lines: ls(v("subs"))};
+  return {headline: v("head") || ls(v("pts"))[0] || "", lines: ls(v("pts"))};
+}
+
+async function buildKit(){
+  const out = $("kitout"); const c = kitContent();
+  if (!c.headline && !c.lines.length){
+    out.innerHTML = '<p class="note warn">There are no words in this video yet, '+
+      'so there is nothing honest to write a caption from.</p>'; return;
+  }
+  out.innerHTML = '<p class="note"><span class="spin"></span>Writing the kit…</p>';
+  try{
+    const t = new URLSearchParams(location.search).get("t") || "";
+    const r = await fetch("/api/publish-kit" + (t ? "?t="+encodeURIComponent(t) : ""),
+      {method:"POST", headers:{"Content-Type":"application/json"},
+       body: JSON.stringify(Object.assign({}, c, {
+         cta: "", brand: $("mark").value.trim(), kind: KIND,
+         w: cv.width, h: cv.height, seconds: duration(),
+         mb: LASTFILE ? LASTFILE.mb : 0,
+         container: LASTFILE ? LASTFILE.container : "" }))});
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error || ("error "+r.status));
+    paintKit(j);
+  }catch(e){ out.innerHTML = '<p class="note warn">'+e.message+'</p>'; }
+}
+
+const esc = t => (t||"").replace(/[&<>"]/g, c =>
+  ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function paintKit(j){
+  const out = $("kitout");
+  out.innerHTML =
+    '<div class="kinds" id="ktabs">' + j.kits.map((k,i)=>
+      `<button class="k" data-i="${i}" aria-pressed="${i===0}">
+         <b>${esc(k.name)}</b><span class="v ${k.verdict}"></span></button>`).join("") +
+    '</div><div id="kbody"></div>' +
+    '<p class="note">'+esc(j.honesty)+' Platform limits as published in '+
+    esc(j.checked)+'.</p>';
+  const show = i => {
+    const k = j.kits[i];
+    const field = (lab, val, rows) =>
+      `<span class="lab">${lab}</span>` +
+      (rows ? `<textarea class="cp" rows="${rows}">${esc(val)}</textarea>`
+            : `<input class="cp" value="${esc(val)}">`) +
+      `<button class="btn sec cpy" style="margin:4px 0 10px">Copy</button>`;
+    $("kbody").innerHTML =
+      k.check.map(c=>`<p class="note ${c.level==="fail"?"warn":""}">
+          <b class="v ${c.level}"></b> ${esc(c.text)}</p>`).join("") +
+      (k.limits.title ? field("Title", k.title) : "") +
+      field("Description", k.description, 7) +
+      field("Hashtags", k.hashtags.join(" ")) +
+      field("Alt text", k.alt, 2) +
+      field("File name", k.filename) +
+      k.notes.map(nt=>`<p class="note">${esc(nt)}</p>`).join("") +
+      `<p class="note"><a href="${esc(k.limits.source)}" target="_blank"
+         rel="noopener">${esc(k.name)}'s own limits</a></p>`;
+    $("kbody").querySelectorAll(".cpy").forEach(b => b.onclick = () => {
+      const f = b.previousElementSibling;
+      f.select(); navigator.clipboard.writeText(f.value);
+      b.textContent = "Copied"; setTimeout(()=>b.textContent="Copy", 1200);
+    });
+  };
+  $("ktabs").onclick = e => { const b = e.target.closest(".k"); if (!b) return;
+    [...$("ktabs").children].forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true"); show(+b.dataset.i); };
+  show(0);
+}
+$("kitgo").onclick = buildKit;
+
+/* ---------- recording ---------- */
+function support(){
+  if (typeof MediaRecorder==="undefined" || !cv.captureStream)
+    return {ok:false, why:"This browser cannot record from a canvas. Chrome, Edge and Firefox can."};
+  const mime = ["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"]
+    .find(m=>MediaRecorder.isTypeSupported(m));
+  return mime ? {ok:true, mime} : {ok:false, why:"This browser has no WebM encoder."};
+}
+function record(then){
+  const s = support();
+  if (!s.ok){ $("rnote").innerHTML='<span class="warn">'+s.why+'</span>'; return; }
+  const D = duration();
+  const stream = cv.captureStream(30);
+  const rec = new MediaRecorder(stream,{mimeType:s.mime, videoBitsPerSecond:6e6});
+  const chunks=[]; rec.ondataavailable = e=>e.data.size&&chunks.push(e.data);
+  rec.onstop = ()=>{ recording=false; $("dot").classList.remove("rec");
+    $("hud").textContent="ready"; $("rec").disabled=false; $("mp4").disabled=false;
+    $("rec").textContent="Record the video"; $("prog").style.width="0%";
+    then(new Blob(chunks,{type:"video/webm"})); };
+  T = 0; playing = true; recording = true;
+  $("dot").classList.add("rec"); $("rec").disabled=true; $("mp4").disabled=true;
+  $("rec").textContent="Recording…";
+  $("rnote").textContent = "Recording plays it once, in real time — "+D.toFixed(1)+" seconds.";
+  rec.start(400);
+  const t0 = performance.now();
+  const tick = setInterval(()=>{
+    const p = Math.min(1,(performance.now()-t0)/(D*1000));
+    $("prog").style.width=(p*100)+"%";
+    $("hud").textContent = "recording "+((performance.now()-t0)/1000).toFixed(1)+"s";
+    if (p>=1){ clearInterval(tick); playing=false; try{rec.stop()}catch(e){} }
+  },100);
+}
+const fname = ext => (($("mark").value||"post").toLowerCase().replace(/\W+/g,"-"))+"-"+KIND+"."+ext;
+function save(blob, name){
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+$("rec").onclick = ()=> record(blob=>{
+  LASTFILE = {mb: blob.size/1048576, container: "webm"};
+  save(blob, fname("webm"));
+  $("rnote").innerHTML = '<span class="ok">Saved '+(blob.size/1048576).toFixed(1)+
+    ' MB of WebM.</span> LinkedIn and X take WebM. For Instagram or TikTok use the MP4 button.';
+});
+$("mp4").onclick = ()=> record(async blob=>{
+  $("rnote").innerHTML = '<span class="spin"></span>Converting on the studio…';
+  try{
+    const t = new URLSearchParams(location.search).get("t") || "";
+    const r = await fetch("/api/tomp4"+(t?"?t="+encodeURIComponent(t):""),
+      {method:"POST", headers:{"Content-Type":"application/octet-stream"}, body:blob});
+    const j = await r.json();
+    if (!r.ok || j.error) throw new Error(j.error||("error "+r.status));
+    LASTFILE = {mb: j.bytes/1048576, container: "mp4"};
+    const a=document.createElement("a"); a.href=j.file; a.download=fname("mp4"); a.click();
+    $("rnote").innerHTML = '<span class="ok">MP4 ready — '+(j.bytes/1048576).toFixed(1)+' MB.</span> '+
+      'Converted at 30fps on the studio, which is what the platforms expect.';
+  }catch(e){
+    save(blob, fname("webm"));
+    $("rnote").innerHTML = '<span class="warn">Could not convert: '+e.message+
+      '</span> The WebM was saved instead.';
+  }
+});
+$("png").onclick = ()=> cv.toBlob(b=>save(b, fname("png")), "image/png");
+
+setKind("mcq");
+$("rnote").innerHTML = support().ok
+  ? "Recording happens in this browser. No ffmpeg, no render queue, no waiting."
+  : '<span class="warn">'+support().why+'</span>';
+</script>
+<script src="offline.js"></script><script src="nav.js"></script></body></html>

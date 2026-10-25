@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Workspace</title>
+<style>
+:root{--bg:#07090d;--panel:#0d1117;--panel2:#11171f;--line:#1c232e;--ink:#eef2f7;
+  --dim:#8b97a8;--faint:#5a6578;--accent:#4f8cff;--accent2:#8e55ff;--ok:#46d6a0;
+  --warn:#f0a35e;--bad:#ff6b7a;--ease:cubic-bezier(.2,.7,.2,1);
+  --f:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  --m:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 var(--f);
+  -webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(880px 600px at 86% -10%,color-mix(in srgb,var(--accent2) 14%,transparent),transparent 70%),
+             radial-gradient(700px 480px at 2% 10%,color-mix(in srgb,var(--accent) 11%,transparent),transparent 72%)}
+.wrap{position:relative;max-width:1120px;margin:0 auto;padding:26px 20px 80px}
+h1{margin:0;font-size:clamp(22px,3.2vw,32px);font-weight:600;letter-spacing:-.032em}
+h2{margin:0;font-size:15px;font-weight:600;letter-spacing:-.012em}
+a{color:var(--accent)}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;
+  flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--m);font-size:10px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:7px}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:16px;padding:20px;margin-top:16px;animation:rise .45s var(--ease) both}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:12px;
+  flex-wrap:wrap;margin-bottom:14px}
+.lab{font-family:var(--m);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-family:var(--m);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);font-weight:500;padding:7px 10px 7px 0;
+  border-bottom:1px solid var(--line)}
+td{padding:11px 10px 11px 0;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;font-family:var(--m);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--dim)}
+.pill.ok{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent);
+  background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.pill.warn{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent);
+  background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.pill.bad{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 38%,transparent);
+  background:color-mix(in srgb,var(--bad) 9%,transparent)}
+.why{font-size:12px;color:var(--dim);margin-top:4px;max-width:62ch;line-height:1.45}
+input,select{background:#0f141b;color:var(--ink);border:1px solid var(--line);border-radius:10px;
+  padding:9px 11px;font:inherit;font-size:13px;width:100%;
+  transition:box-shadow .22s var(--ease),border-color .2s}
+input:focus,select:focus{outline:none;border-color:transparent;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 65%,transparent)}
+.row{display:flex;gap:9px;flex-wrap:wrap}.row>*{flex:1 1 170px;min-width:0}
+.btn{border:0;border-radius:10px;padding:10px 16px;font:inherit;font-weight:600;font-size:13px;
+  color:#05080f;cursor:pointer;background:linear-gradient(100deg,var(--accent),var(--accent2));
+  transition:transform .15s var(--ease),filter .2s;white-space:nowrap}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.07)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;filter:none}
+.btn.sec{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:7px 12px;font-size:12px;font-weight:500}
+.meter{height:6px;background:#141b24;border-radius:999px;overflow:hidden;margin-top:9px}
+.meter i{display:block;height:100%;border-radius:999px;
+  background:linear-gradient(100deg,var(--accent),var(--accent2));transition:width .5s var(--ease)}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.plan{border:1px solid var(--line);border-radius:14px;padding:16px;background:#0f141b;
+  transition:border-color .22s,transform .2s var(--ease)}
+.plan:hover{transform:translateY(-2px)}
+.plan.on{border-color:color-mix(in srgb,var(--accent) 65%,transparent)}
+.plan b{display:block;font-size:15px}
+.plan .pr{font-family:var(--m);font-size:24px;margin:8px 0 2px}
+.plan ul{margin:10px 0 0;padding-left:16px;font-size:12px;color:var(--dim);line-height:1.7}
+.note{font-size:12.5px;color:var(--dim);margin-top:10px;line-height:1.5}
+.err{color:var(--bad)}.good{color:var(--ok)}
+.gate{max-width:420px;margin:12vh auto}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0 0}
+.tab{font-family:var(--m);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  padding:8px 14px;border-radius:999px;border:1px solid var(--line);color:var(--faint);
+  background:transparent;cursor:pointer;transition:all .22s var(--ease)}
+.tab[aria-selected=true]{color:#05080f;border-color:transparent;
+  background:linear-gradient(100deg,var(--accent),var(--accent2))}
+.hide{display:none!important}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
+  font-family:var(--m);font-size:10.5px;color:var(--faint);line-height:1.9}
+</style></head><body>
+<div class="wrap">
+  <div id="gate" class="gate hide">
+    <div class="eyebrow">Craftly</div>
+    <h1 id="gtitle">Sign in</h1>
+    <div class="card">
+      <div id="gfields"></div>
+      <div class="row" style="margin-top:14px;flex:0">
+        <button class="btn" id="gdo">Sign in</button>
+        <button class="btn sec" id="gswap">Create an account</button>
+      </div>
+      <p class="note" id="gmsg"></p>
+    </div>
+  </div>
+
+  <div id="app" class="hide">
+    <div class="top">
+      <div>
+        <div class="eyebrow">Workspace</div>
+        <h1 id="wsname">—</h1>
+      </div>
+      <div class="row" style="flex:0 1 auto;align-items:center">
+        <select id="wspick" style="width:auto;min-width:190px"></select>
+        <button class="btn sec sm" id="wsnew">New workspace</button>
+        <button class="btn sec sm" id="signout">Sign out</button>
+      </div>
+    </div>
+
+    <div class="tabs" id="tabs"></div>
+    <div id="panes"></div>
+  </div>
+
+  <footer id="foot"></footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const api = async (u,b) => {
+  const r = await fetch(u, b ? {method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(b)} : {});
+  const j = await r.json().catch(()=>({error:"the server did not answer in JSON"}));
+  if (!r.ok) throw new Error(j.error || ("error " + r.status));
+  return j;
+};
+let ME = null, TAB = "team";
+
+/* ── the gate ─────────────────────────────────────────────────────── */
+let mode = "login";
+function gate(){
+  $("gate").classList.remove("hide"); $("app").classList.add("hide");
+  $("gtitle").textContent = mode==="login" ? "Sign in" : "Create an account";
+  $("gdo").textContent   = mode==="login" ? "Sign in" : "Create the account";
+  $("gswap").textContent = mode==="login" ? "Create an account" : "I already have one";
+  $("gfields").innerHTML = (mode==="signup" ? `
+    <span class="lab">Your name</span><input id="f-name" placeholder="Zulfiqar Ali" style="margin:6px 0 12px">
+    <span class="lab">Workspace name</span><input id="f-ws" placeholder="iCore Business Solutions" style="margin:6px 0 12px">
+    <span class="lab">This is for</span>
+    <select id="f-kind" style="margin:6px 0 12px">
+      <option value="individual">Myself</option><option value="agency">An agency with clients</option>
+    </select>` : "") + `
+    <span class="lab">Email</span><input id="f-email" type="email" autocomplete="email" style="margin:6px 0 12px">
+    <span class="lab">Password</span><input id="f-pw" type="password"
+      autocomplete="${mode==="login"?"current-password":"new-password"}" style="margin:6px 0 0">
+    ${mode==="signup"?'<p class="note">Ten characters or more.</p>':""}`;
+}
+$("gswap").onclick = ()=>{ mode = mode==="login"?"signup":"login"; $("gmsg").textContent=""; gate(); };
+$("gdo").onclick = async ()=>{
+  $("gdo").disabled = true; $("gmsg").textContent = "";
+  try{
+    const body = {email:$("f-email").value.trim(), password:$("f-pw").value};
+    if (mode==="signup"){ body.name=$("f-name").value.trim();
+      body.workspace=$("f-ws").value.trim(); body.kind=$("f-kind").value; }
+    await api("/api/auth/"+(mode==="login"?"login":"signup"), body);
+    const i = new URLSearchParams(location.search).get("i");
+    if (i) { try { await api("/api/invite/accept",{token:i}); } catch(e){} }
+    await boot();
+  }catch(e){ $("gmsg").innerHTML = '<span class="err">'+esc(e.message)+'</span>'; }
+  $("gdo").disabled = false;
+};
+$("signout").onclick = async ()=>{ await api("/api/auth/logout",{}); location.reload(); };
+
+/* ── panes ────────────────────────────────────────────────────────── */
+const TABS = [["team","Team"],["channels","Connections"],["tasks","Schedule"],
+              ["plan","Plan & credits"],["activity","Activity"]];
+
+function paintTabs(){
+  $("tabs").innerHTML = TABS.map(([k,l])=>
+    `<button class="tab" data-k="${k}" aria-selected="${TAB===k}">${l}</button>`).join("");
+  $("tabs").onclick = e=>{ const b=e.target.closest(".tab"); if(!b) return;
+    TAB=b.dataset.k; paintTabs(); render(); };
+}
+
+const RANK = {viewer:0, editor:1, admin:2, owner:3};
+const atLeast = r => RANK[ME.role] >= RANK[r];
+
+async function render(){
+  const P = $("panes");
+  if (TAB === "team") {
+    const seats = ME.seats || 0, used = (ME.members||[]).length;
+    P.innerHTML = `<div class="card">
+      <div class="hd"><h2>People</h2><span class="lab">${used} of ${seats||"∞"} seats used</span></div>
+      <table><thead><tr><th>Person</th><th>Role</th><th></th></tr></thead><tbody>
+      ${(ME.members||[]).map(m=>`<tr>
+        <td><b>${esc(m.name||m.email)}</b><div class="why">${esc(m.email)}</div></td>
+        <td>${m.role==="owner" ? '<span class="pill">owner</span>' :
+            (atLeast("admin") ? `<select data-role="${esc(m.user)}" style="width:auto">
+              ${["admin","editor","viewer"].map(r=>`<option value="${r}" ${r===m.role?"selected":""}>${r}</option>`).join("")}
+            </select>` : `<span class="pill">${esc(m.role)}</span>`)}</td>
+        <td></td></tr>`).join("")}
+      </tbody></table>
+      ${atLeast("admin") ? `<div class="row" style="margin-top:16px">
+        <input id="inv-email" type="email" placeholder="their email">
+        <select id="inv-role" style="flex:0 0 140px">
+          <option value="editor">Editor</option><option value="admin">Admin</option>
+          <option value="viewer">Viewer</option></select>
+        <button class="btn" id="inv-go" style="flex:0 0 auto">Invite</button>
+      </div><p class="note" id="inv-msg">An editor can create and schedule. An admin can also
+        invite people and connect accounts. A viewer can only look.</p>`
+      : '<p class="note">Only an admin or the owner can invite people.</p>'}
+    </div>`;
+    const go = $("inv-go");
+    if (go) go.onclick = async ()=>{
+      go.disabled = true;
+      try{
+        const r = await api("/api/ws/invite",{email:$("inv-email").value.trim(),
+                                              role:$("inv-role").value});
+        $("inv-msg").innerHTML = '<span class="good">Invitation made.</span> Send them this link: '
+          + '<code>' + location.origin + esc(r.link) + '</code>'
+          + ' — there is no email server configured, so you pass it on yourself.';
+      }catch(e){ $("inv-msg").innerHTML='<span class="err">'+esc(e.message)+'</span>'
+          + (/seats/.test(e.message) ? ' — a larger plan is under <b>Plan &amp; credits</b>.' : ''); }
+      go.disabled = false;
+    };
+    P.querySelectorAll("[data-role]").forEach(sel => sel.onchange = async ()=>{
+      try{ await api("/api/ws/role",{user:sel.dataset.role, role:sel.value}); await boot(); }
+      catch(e){ alert(e.message); }
+    });
+  }
+
+  if (TAB === "channels") {
+    const d = await api("/api/ws/channels");
+    P.innerHTML = `<div class="card">
+      <div class="hd"><h2>Connected accounts</h2></div>
+      <p class="note" style="margin:0 0 14px">Each account says what it can actually do, before
+        you write the post rather than after it fails. Nothing is ever recorded as published
+        unless the platform returned a post id.</p>
+      <table><thead><tr><th>Platform</th><th>State</th><th>Can post</th><th></th></tr></thead><tbody>
+      ${d.channels.map(c=>{
+        const cls = c.state==="connected" ? (c.can_publish?"ok":"warn")
+                  : c.state==="never_connected" ? "" : "bad";
+        return `<tr>
+          <td><b>${esc(c.label)}</b>${c.handle?`<div class="why">${esc(c.handle)}</div>`:""}</td>
+          <td><span class="pill ${cls}">${esc(c.state.replace(/_/g," "))}</span>
+              <div class="why">${esc(c.why)}</div></td>
+          <td>${c.can_publish?'<span class="pill ok">yes</span>':'<span class="pill">no</span>'}</td>
+          <td>${atLeast("admin")?`<button class="btn sec sm" data-conn="${esc(c.platform)}">
+            ${c.state==="never_connected"?"Record a connection":"Update"}</button>`:""}</td>
+        </tr>`;}).join("")}
+      </tbody></table>
+      <p class="note"><b>What is not built:</b> the sign-in handshake with each platform.
+        Connecting for real needs a developer app registered with that platform, which only
+        you can create. This screen records what is connected and refuses to pretend otherwise.</p>
+    </div>`;
+    P.querySelectorAll("[data-conn]").forEach(b => b.onclick = ()=> connDialog(b.dataset.conn));
+  }
+
+  if (TAB === "tasks") {
+    const d = await api("/api/ws/tasks");
+    const DAYS = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    P.innerHTML = `<div class="card">
+      <div class="hd"><h2>Scheduled tasks</h2><span class="lab">checked every ten minutes</span></div>
+      ${d.tasks.length ? `<table><thead><tr><th>Task</th><th>When</th><th>Last run</th><th></th></tr></thead><tbody>
+      ${d.tasks.map(t=>`<tr>
+        <td><b>${esc(t.name)}</b><div class="why">${esc(t.kind)} · ${t.runs||0} run${t.runs===1?"":"s"}</div></td>
+        <td>${DAYS[t.weekday]||"?"} ${String(t.hour).padStart(2,"0")}:00
+            ${t.active?'<span class="pill ok">on</span>':'<span class="pill">paused</span>'}</td>
+        <td>${t.last_run? new Date(t.last_run*1000).toLocaleString() : "never"}
+            ${t.last_state?`<div class="why">${esc(t.last_state)}${t.last_note?" — "+esc(t.last_note):""}</div>`:""}</td>
+        <td>${atLeast("editor")?`<button class="btn sec sm" data-toggle="${t.id}">${t.active?"Pause":"Resume"}</button>
+            <button class="btn sec sm" data-run="${t.id}">Run now</button>`:""}</td>
+      </tr>`).join("")}</tbody></table>`
+      : '<p class="note">No scheduled tasks yet.</p>'}
+      ${atLeast("editor")?`<div class="row" style="margin-top:16px">
+        <input id="t-name" placeholder="Weekly content">
+        <select id="t-day" style="flex:0 0 150px">${DAYS.map((d,i)=>`<option value="${i}">${d}</option>`).join("")}</select>
+        <select id="t-hour" style="flex:0 0 110px">${[6,7,8,9,10,12,14,17,20].map(h=>`<option value="${h}" ${h===9?"selected":""}>${String(h).padStart(2,"0")}:00</option>`).join("")}</select>
+        <button class="btn" id="t-add" style="flex:0 0 auto">Add</button>
+      </div><p class="note" id="t-msg">A task produces a week from a saved brief. It needs a
+        client seat and a ready week on it; the control panel is where those are set up.</p>`:""}
+    </div>`;
+    const add = $("t-add");
+    if (add) add.onclick = async ()=>{
+      try{ await api("/api/ws/task",{name:$("t-name").value.trim()||"Weekly",
+             weekday:+$("t-day").value, hour:+$("t-hour").value, kind:"week", payload:{}});
+           render(); }
+      catch(e){ $("t-msg").innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
+    };
+    P.querySelectorAll("[data-toggle]").forEach(b=>b.onclick=async()=>{
+      await api("/api/ws/task-toggle",{id:+b.dataset.toggle}); render(); });
+    P.querySelectorAll("[data-run]").forEach(b=>b.onclick=async()=>{
+      b.disabled=true; b.textContent="Running…";
+      try{ const r=await api("/api/ws/task-run",{id:+b.dataset.run});
+           $("t-msg").innerHTML='<span class="good">'+esc(r.note||"done")+'</span>'; }
+      catch(e){ $("t-msg").innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
+      render(); });
+  }
+
+  if (TAB === "plan") {
+    const d = await api("/api/plans");
+    const cur = (ME.plan||{}).id;
+    const credits = ME.credits||0, allow = (ME.plan||{}).credits || 1;
+    P.innerHTML = `<div class="card">
+      <div class="hd"><h2>Credits</h2><span class="lab">${credits} left of ${allow}</span></div>
+      <div class="meter"><i style="width:${Math.max(0,Math.min(100,credits/allow*100))}%"></i></div>
+      <p class="note">A credit is spent when something is written or rendered. A job that would
+        take you past zero is refused rather than run and billed afterwards.</p>
+    </div>
+    <div class="card"><div class="hd"><h2>Plan</h2></div>
+      <div class="plans">${d.plans.map(p=>`<div class="plan ${p.id===cur?"on":""}">
+        <b>${esc(p.name)}</b><div class="pr">$${p.price.toFixed(0)}</div>
+        <span class="lab">per ${esc(p.interval)}</span>
+        <ul><li>${p.seats} seat${p.seats===1?"":"s"}</li><li>${p.credits} credits</li>
+          ${Object.entries(p.features).filter(([,v])=>v===true).map(([k])=>`<li>${esc(k)}</li>`).join("")}</ul>
+        ${p.id===cur?'<p class="note" style="margin-top:12px"><span class="pill ok">current</span></p>'
+          : (atLeast("owner")?`<button class="btn sec sm" data-plan="${esc(p.id)}" style="margin-top:12px;width:100%">Choose</button>`:"")}
+      </div>`).join("")}</div>
+      <p class="note"><b>No payment provider is connected.</b> Choosing a plan records the choice
+        and grants its credits; it does not take money. Prices live in the database, so they are
+        edited rather than deployed.</p>
+    </div>`;
+    P.querySelectorAll("[data-plan]").forEach(b=>b.onclick=async()=>{
+      try{ await api("/api/ws/plan",{plan:b.dataset.plan}); await boot(); }
+      catch(e){ alert(e.message); } });
+  }
+
+  if (TAB === "activity") {
+    const d = await api("/api/ws/activity");
+    P.innerHTML = `<div class="card"><div class="hd"><h2>Publishing</h2></div>
+      ${d.publishes.length ? `<table><thead><tr><th>When</th><th>Post</th><th>Result</th></tr></thead><tbody>
+      ${d.publishes.slice().reverse().map(r=>`<tr>
+        <td>${new Date(r.at*1000).toLocaleString()}</td><td>${esc(r.post||"")}</td>
+        <td>${r.state==="published"?`<span class="pill ok">published</span>
+          <div class="why">${esc(r.platform_id||"")}</div>`
+          :`<span class="pill bad">failed</span><div class="why">${esc(r.error||"")}</div>`}</td>
+      </tr>`).join("")}</tbody></table>` : '<p class="note">Nothing has been published yet.</p>'}
+    </div>
+    <div class="card"><div class="hd"><h2>What happened in this workspace</h2></div>
+      ${d.audit.length ? `<table><thead><tr><th>When</th><th>Action</th><th>Detail</th></tr></thead><tbody>
+      ${d.audit.map(a=>`<tr><td>${new Date(a.at*1000).toLocaleString()}</td>
+        <td><span class="pill">${esc(a.action)}</span></td><td>${esc(a.detail||"")}</td></tr>`).join("")}
+      </tbody></table>` : '<p class="note">Nothing recorded yet.</p>'}
+    </div>`;
+  }
+}
+
+function connDialog(platform){
+  const P = $("panes");
+  const box = document.createElement("div");
+  box.className = "card";
+  box.innerHTML = `<div class="hd"><h2>Record a connection — ${esc(platform)}</h2></div>
+    <p class="note" style="margin:0 0 12px">This writes down what is true today. It does not
+      perform a sign-in; that needs a developer app you register with the platform.</p>
+    <div class="row">
+      <input id="c-handle" placeholder="@handle or page name">
+      <select id="c-state">
+        <option value="connected">Connected</option>
+        <option value="permission_missing">Connected, no posting permission</option>
+        <option value="token_expired">Token expired</option>
+        <option value="revoked">Access revoked</option>
+        <option value="never_connected">Not connected</option>
+      </select>
+      <select id="c-kind"><option value="">Account kind…</option>
+        <option value="business">Business</option><option value="creator">Creator</option>
+        <option value="personal">Personal</option></select>
+    </div>
+    <div class="row" style="margin-top:12px;flex:0">
+      <button class="btn" id="c-save">Save</button>
+      <button class="btn sec" id="c-cancel">Cancel</button>
+      <span class="note" id="c-msg" style="margin:0"></span>
+    </div>`;
+  P.prepend(box);
+  box.querySelector("#c-cancel").onclick = ()=> render();
+  box.querySelector("#c-save").onclick = async ()=>{
+    try{ await api("/api/ws/channel",{platform, state:box.querySelector("#c-state").value,
+          handle:box.querySelector("#c-handle").value.trim(),
+          account_kind:box.querySelector("#c-kind").value||null});
+      render(); }
+    catch(e){ box.querySelector("#c-msg").innerHTML='<span class="err">'+esc(e.message)+'</span>'; }
+  };
+}
+
+/* ── boot ─────────────────────────────────────────────────────────── */
+async function boot(){
+  let me;
+  try { me = await api("/api/me"); } catch(e){ me = {signed_in:false}; }
+  if (!me.signed_in){ gate(); return; }
+  ME = me;
+  $("gate").classList.add("hide"); $("app").classList.remove("hide");
+  $("wsname").textContent = (me.workspaces.find(w=>w.id===me.workspace)||{}).name || "Workspace";
+  $("wspick").innerHTML = me.workspaces.map(w=>
+    `<option value="${esc(w.id)}" ${w.id===me.workspace?"selected":""}>${esc(w.name)} · ${esc(w.role)}</option>`).join("");
+  $("wspick").onchange = async ()=>{ await api("/api/ws/switch",{workspace:$("wspick").value}); await boot(); };
+  paintTabs(); render();
+  $("foot").textContent = "Signed in as " + me.email + " · " + me.role + " in this workspace.";
+}
+$("wsnew").onclick = async ()=>{
+  const n = prompt("Name for the new workspace"); if (!n) return;
+  await api("/api/ws/create",{name:n}); await boot();
+};
+
+(async ()=>{
+  const i = new URLSearchParams(location.search).get("i");
+  const me = await api("/api/me").catch(()=>({signed_in:false}));
+  if (i && me.signed_in){ try{ await api("/api/invite/accept",{token:i}); }catch(e){} }
+  boot();
+})();
+</script>
+<script src="offline.js"></script><script src="nav.js"></script></body></html>
